@@ -1,0 +1,39 @@
+<html>
+
+<head>
+  <title>Eric's experiment</title>
+</head>
+
+<body>
+  <font size = "12">My attempt to use <code>knitr</code> to display some of the assignment tasks that I did for Stats 380.</font>
+  <p><code>next.term</code> - Generates the next term from the current term following this 
+  <a href = "https://www.stat.auckland.ac.nz/~stat380/downloads/assign01.pdf">equation</a>.<br>
+  <b>Argument</b> &rarr; x is a positive integer<br>
+  <b>Description</b> &rarr; The function substrings each digit of the number x which is then sequentially saved into a numeric vector.........blah blah<br>
+  <b>Return value</b> &rarr; A number corresponding to the next term 
+  <eq inline=1><i>x</i><sub><i>i</i>&plus;1</sub></eq><br>
+  </p>
+
+<!--begin.rcode
+    next.term =
+      function(x) {
+		    x1 = as.numeric(substring(x, 1:nchar(x), 1:nchar(x)))
+		    x2 = x1[x1 != 0]		
+		    result = x + prod(x2)
+		    result
+	    }
+    end.rcode-->
+
+  <p>Here are some examples:</p>
+
+<!--begin.rcode, results='hold'
+    next.term(1)
+    next.term(12)
+    next.term(123)
+    end.rcode-->
+
+  <p> Let's ask <b>R</b> what the next term of 5103 is. <b>R</b> reckons: <!--rinline next.term(5103) -->.
+  5103 + 5 * 1 * 3 = 5118!
+
+</body>
+</html>
