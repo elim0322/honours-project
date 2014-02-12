@@ -1,0 +1,38 @@
+<html>
+
+<head>
+  <title>Paul's experiment</title>
+  <style type="text/css">
+    p.header { font-size: 18pt; font-weight: bold }
+    p.hidden { display: none }
+  </style>
+</head>
+
+<body>
+  <p class="header">
+    Rather than using font elements, better to use generic elements, like p
+    (for paragraph) PLUS a class and then use CSS to style.
+  </p>
+  <p>
+    This paragraph is just normal
+  </p>
+  <p class="special">
+    This paragraph has a class, but it has no visual effect
+  </p>
+  <p class="hidden">
+    This paragraph has a class that makes it invisible!
+  </p>
+
+<!--begin.rcode
+cat("This is R code that is kept")
+end.rcode-->
+
+<!--begin.rcode echo=FALSE
+cat("This is R code where only the output is kept")
+end.rcode-->
+<!--begin.keepcode echo=FALSE
+cat("This is R code where only the output is kept")
+end.keepcode-->
+
+</body>
+</html>
