@@ -13,26 +13,22 @@
 #
 #   new.txt = text that is used as an edit
 
-source.edit = 
-  function (old.dir = NULL, new.dir = NULL, old.txt, new.txt)
-    {
-      if (is.null(old.dir) == TRUE)
-        {
-          source.dir <- load.dir()
-          sourceDoc <- readLines(source.dir)
-        }
-          else sourceDoc <- readLines(old.dir)
-    
-      if (is.null(new.dir) == TRUE)
-        {
-          output.dir <- source.dir
-          output.file <- gsub('^(.+[/])','\\1New \\2',output.dir)
-        }
-        else
-          output.file = new.dir
-          new.sourceDoc <- gsub(old.txt, new.txt, sourceDoc)
-          writeLines(new.sourceDoc, output.file)
-    }
+source.edit = function (old.dir = NULL, new.dir = NULL, old.txt, new.txt) {
+  if (is.null(old.dir)) {
+    source.dir <- load.dir()
+    sourceDoc <- readLines(source.dir)
+  } else sourceDoc <- readLines(old.dir)
+  
+  if (is.null(new.dir)) {
+    output.dir <- source.dir
+    output.file <- gsub('^(.+[/])','\\1New \\2',output.dir)
+  } else {
+    output.file = new.dir
+  }
+  
+  new.sourceDoc <- gsub(old.txt, new.txt, sourceDoc)
+  writeLines(new.sourceDoc, output.file)
+}
 
 
 # example:
