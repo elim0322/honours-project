@@ -1,47 +1,52 @@
-sewr <- function(dir = NULL, out.dir = NULL) {
+sew <- function(dir = NULL, out.dir = NULL) {
   if (is.null(dir)) {
-    source.dir <- load.dir()
-    source.doc <- readLines(source.dir)
-  } else source.doc <- readLines(dir)
+    src.dir <- load.dir()
+    src <- readLines(src.dir)
+  } else src <- readLines(dir)
   
-  R.begin <- grep("<!--begin.rcode", source.doc)
-  R.end <- grep("end.rcode-->", source.doc)
-  R.begin <- grep("<!--begin.keepcode", source.doc)
-  R.end <- grep("end.rcode-->", source.doc)
+  R.begin <- grep("<!--begin.rcode", src)
+  R.end <- c(grep("end.rcode-->", src), length(src))
   
-  # Just checking
-  if (length(R.begin) > length(R.end))
-    stop("Please check as there might be extra '<!--begin.rcode' not being used")
-  if (length(R.begin) < length(R.end))
-    stop("Please check as there might be extra 'end.rcode-->' not being used")
-    stop("Please check as there might be extra '<!--begin.keepcode' not being used")
-  if (length(R.begin) < length(R.end))
-    stop("Please check as there might be extra 'end.rcode-->' not being used")
+  ############################# get rid of \t #############################
+  for (i in 1:length(R.begin)) {
+    if (!is.null(grep("\t", src[R.begin[i]:R.end[i]]))) {
+      src <- gsub("\t", "  ", src)
+    }
+  }
   
-  # Create an empty list and vector to store results from loop
-  keep.list <- vector("list", length(R.begin))
+  ######################### inline R code chunks  #########################
+  in.line <- grep("<!--rinline", src)
+  in.vector <- vector("numeric", length(in.line))
+  
+  for (i in 1:length(in.line)) {
+    in.vector[i] <- gsub("^.+[<!--]rinline", "<!--keep.rinline", src[in.line][i])
+    src[in.line][i] <- gsub("[-][>].*$", paste("->", in.vector[i]), src[in.line][i])
+  }
+  #########################################################################
+  
+  keep.list <- vector("list", (length(R.begin)+1))
   keep.vector <- vector("numeric",length(R.begin))
   
   for(i in 1:length(R.begin)) {
-  keep.list[[i]] <- source.doc[R.begin[i]:R.end[i]]
+  keep.list[[i]] <- src[R.begin[i]:R.end[i]]
   keep.vector[i] <- gsub("[.]r", ".keep", keep.list[[i]][1])
   keep.list[[i]][1] <- keep.vector[i]
   }
   
-  # I tried to divide Rhtml into segments so that I can add bits and save the whole thing into post.Rhtml
-  Rhtml.seg <- vector("list", length(R.begin)+1)
-  Rhtml.seg[[1]] <- source.doc[1:R.end[1]]
-  Rhtml.seg[[2]] <- source.doc[(R.end[1]+1):R.end[2]]
-  Rhtml.seg[[3]] <- source.doc[(R.end[2]+1):length(source.doc)]
-  
-  result.list <- c(Rhtml.seg[[1]], keep.list[[1]], Rhtml.seg[[2]], keep.list[[2]], Rhtml.seg[3])
-  result <- unlist(result.list)
-
-  if (is.null(out.dir)) {
-    out.dir <- source.dir
-    out.file <- gsub("Rhtml","post.Rhtml", out.dir)
-  } else {
-    out.file <- out.dir
+  lines <- vector("numeric", length(R.begin)+1)
+  lines[1] <- 1
+  for (i in 1:(length(lines)-1)){
+    lines[i+1] <- R.end[i]+1
   }
-    writeLines(result, out.file)
+  
+  if (is.null(out.dir)) {
+    out.dir <- src.dir
+    out.file <- gsub("Rhtml","post.Rhtml", out.dir)
+  }
+  
+  f <- file(out.file, open = "w")
+  for (i in 1:length(R.end)) {
+    writeLines(c(src[lines[i]:R.end[i]], keep.list[[i]]), f)
+  }
+  close(f)
 }
