@@ -6,7 +6,8 @@ rip <- function(infile = NULL, outfile = NULL) {
         stop("infile is not a post.html file")
     
     src <- readLines(infile)
-    
+
+    # We assume that ONLY knitr has written .knitr.inline within a <style>
     # ".knitr.inline {" string seems to be always after 
     # "<style type=\"text/css\">" string.
     # Using this property, the correct "<style..." string is removed.
@@ -15,13 +16,18 @@ rip <- function(infile = NULL, outfile = NULL) {
     style.end <- grep("</style>", src)
     
     if (any(style.begin == (inline-1))) {
-        start <- style.begin[which(style.begin == (inline-1))]
-        src <- src[-c(start:style.end[1])]
+        # We use [1] to guard against multiple matching style.begins
+        start <- style.begin[which(style.begin == (inline-1))[1]]
+        end <- style.end[which(style.end > start)[1]]
+        src <- src[-c(start:end)]
     }
     
     ################ Remove "<div class=..." strings ################
+    # We assume that ONLY knitr has written <div class="chunk"
     chunks.begin <- grep('<div class=\"chunk\".+$', src)
-    chunks.end <- grep('</div></div>', src)
+    # We assume that ONLY knitr has written </div></div> on a line
+    chunks.end <- grep('^</div></div>$', src)
+    # src <- src[-mapply(seq, chunks.begin, chunks.end)]
     chunks <- vector("list", length(chunks.begin))
     for (i in 1:length(chunks.begin)) {
         chunks[[i]] <- chunks.begin[i]:chunks.end[i]
