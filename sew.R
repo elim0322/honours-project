@@ -2,7 +2,7 @@ copyInline <- function(line) {
     # NOTE that the regular expression below is the "official"
     # pattern for knitr inline R code (all_patterns$html$inline.code)
     temp <- gsub("<!--\\s*rinline", "<!--keep.rinline", line)
-    paste(line, temp)
+    paste(line, temp, sep = "")
 }
 
 processRinline <- function(line) {
