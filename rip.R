@@ -27,10 +27,15 @@ rip <- function(infile = NULL, outfile = NULL) {
     chunks.begin <- grep('<div class=\"chunk\".+$', src)
     # We assume that ONLY knitr has written </div></div> on a line
     chunks.end <- grep('^</div></div>$', src)
-    # src <- src[-mapply(seq, chunks.begin, chunks.end)]
-    chunks <- vector("list", length(chunks.begin))
-    for (i in 1:length(chunks.begin)) {
-        chunks[[i]] <- chunks.begin[i]:chunks.end[i]
+    # Extra protection
+    chunkLine <- grep('^</pre></div>', src)
+    
+    if (any(match(chunks.end, (chunkLine+1)))) {
+        # Can use this line instead: src <- src[-mapply(seq, chunks.begin, chunks.end)]
+        chunks <- vector("list", length(chunks.begin))
+        for (i in 1:length(chunks.begin)) {
+            chunks[[i]] <- chunks.begin[i]:chunks.end[i]
+        }
     }
     lines <- unlist(chunks)
     src <- src[-lines]

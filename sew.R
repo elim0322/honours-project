@@ -10,7 +10,7 @@ processRinline <- function(line) {
     temp <- unlist(strsplit(mark, "~MARKER~"))
     lines <- grep("<!--rinline", temp)
     for (i in 1:length(lines)) {
-      temp[lines][i] <- copyInline(temp[lines][i])
+        temp[lines][i] <- copyInline(temp[lines][i])
     }
     result <- paste(temp, collapse = "")
     result
