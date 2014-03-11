@@ -9,9 +9,14 @@ snap <- function(infile = NULL, outfile = NULL) {
     
     # 1st: matches for <p blah blah...> (like <p class =...>)
     # 2nd: matches for <p>
+    # 3rd: matches for <p>blah blah...
     # Does the boolean operator OR work for grep??
     modLines <- c(grep("(^\\s*<p\\s+.*>$)", src),
-                  grep("^\\s*<p>\\s*$", src))
+                  grep("^\\s*<p>\\s*$", src),
+                  grep("^\\s*<p>\\s*.+$", src))
+    # Inserting special markers after the first ">"
+    # Kind of protection to select the ">" after "<p"
+    modLines <- gsub("(^.+.+?>)", "\\1~!@MARKER@!~", modLines)
     # Assuming below lines all end with ">"
     src[modLines] <- gsub(">", ' contenteditable="true">', src[modLines])
     
