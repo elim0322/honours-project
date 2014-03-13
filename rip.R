@@ -28,9 +28,12 @@ rip <- function(infile = NULL, outfile = NULL) {
     # We assume that ONLY knitr has written </div></div> on a line
     chunks.end <- grep('^</div></div>$', src)
     # Extra protection
-    chunkLine <- grep('^</pre></div>', src)
+    chunkLine <- grep('^</pre></div>$', src)
+    # Find which chunks.end lines are the right ones.
+    # ie, chunks.end lines that are after chunkLine lines.
+    chunks.end <- chunkLine[match(chunks.end, (chunkLine+1))]
     
-    if (any(match(chunks.end, (chunkLine+1)))) {
+    if (length(chunks.begin) == length(chunks.end)) {
         # Can use this line instead: src <- src[-mapply(seq, chunks.begin, chunks.end)]
         chunks <- vector("list", length(chunks.begin))
         for (i in 1:length(chunks.begin)) {
