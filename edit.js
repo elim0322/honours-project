@@ -24,25 +24,25 @@
       var editorblocks = CKEDITOR.instances;
       for (i in editorblocks) {
         if (editorblocks[i].checkDirty()) {
-          output = output + 'editor ' + i + ':\\n' + editorblocks[i].getData() +
-            '\\n\\n';
+          output = output + 'editor ' + i + ':\n' + editorblocks[i].getData() +
+            '\n\n';
         } else {
-          output = output + 'editor ' + i + ' NOT MODIFIED\\n\\n';
+          output = output + 'editor ' + i + ' NOT MODIFIED\n\n';
           }
       }
       jQuery.ajax({
-        type: \"POST\",
-        url: \"save-changes.php\",
+        type: "POST",
+        url: "save-changes.php",
         data: { changes: output }
       });
       var annotations = jQuery.ajax({
-        type: \"GET\",
-        url: \"http://annotateit.org/api/search?uri=http://stat220.stat.auckland.ac.nz/cke/test.html\",
+        type: "GET",
+        url: "http://annotateit.org/api/search?uri=http://stat220.stat.auckland.ac.nz/cke/test.html",
         async: false
       });
       jQuery.ajax({
-        type: \"POST\",
-        url: \"save-annotations.php\",
+        type: "POST",
+        url: "save-annotations.php",
         data: { annotations: annotations.responseText }
       });
     }
