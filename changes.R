@@ -20,10 +20,14 @@ changes <- function(infile) {
     }
     # Since the lines to be actually editted are the ones after "start",
     #  and before "end". Hence, +1 and -1.
-    srcLines <- mapply(FUN = seq, start+1, end-1)
+    srcLines <- mapply(FUN = seq, start+1, end-1, SIMPLIFY=FALSE)
     
     # Actual lines to be editted.
-    srcEdit <- srcLines[nchar(chgs[editLines]) != 0]
+    srcEdit <- srcLines[chgsL]
+
+    # Algorithm:
+    # - reduce <p> content to just one line
+    # - replace one line with new content (which is one long line)
     
     # Extra lines inside the <p></p> tags except the first line are removed.
     rm.lines <- vector("numeric", length(srcEdit))
@@ -35,7 +39,7 @@ changes <- function(infile) {
     lines <- paste(chgs[chgsEdit], comment)
     
     # New locations for lines to be editted.
-    temp <- grep('contenteditable=\"true\"', src) + 1
+    temp <- start + 1
     src[temp[chgsL]] <- lines
     src
 }
