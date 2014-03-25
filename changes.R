@@ -92,8 +92,7 @@
                                   src.chunks[[i]][length(src.chunks[[i]])] + abs(temp5)))
                         
                         # Also update all the elements from the n+1_th src.chunks.
-                        # I don't know if this line will work....
-                        ############ Needs test ###################################
+                        ############## Need Paul's help #################################
                         for (j in i:length(src.chunks)) {
                             src.chunks[[j+1]] <- src.chunks[[j+1]] + abs(temp5)
                         }
@@ -104,3 +103,8 @@
             }
         }
     }
+    # Remove the marker lines added.
+    src <- src[-c(grep("#ERIC'S@SPECIAL@MARKER@LINES#", src))]
+    # Still not complete.
+    # More work is needed in annotation before I can complete this function.
+    src
