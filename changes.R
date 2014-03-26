@@ -17,15 +17,14 @@
     
     # Each element in this list represents the lines corresponding to
     # each "editor" chunk (I separated each chunk into each element of the list).
-    editor.chunks <- mapply(seq, editor.start, editor.end, SIMPLIFY = FALSE)
+    editor.chunks <- mapply(seq, editor.start, editor.end - 1, SIMPLIFY = FALSE)
     
     # Which of the "editor..." lines contain "NOT MODIFIED"?
     # Return a number to indicate which editor chunk is modified.
-    temp1 <- grepl("NOT MODIFIED", editor[editor.start])
-    which.chunks <- which(temp1 == FALSE)
+    which.chunks <- grep("NOT MODIFIED", editor[editor.start])
     
     # A list of indices for the lines editted (unwanted/unmodified lines discarded).
-    editor.chunks <- editor.chunks[which.chunks]
+    editor.chunks <- editor.chunks[-which.chunks]
     
     ####################### "Attempt.edit.html" bits #######################
     src.start <- grep('contenteditable=\"true\"', src)
@@ -48,15 +47,22 @@
     
     # Replace each "editor lines" with a comment.
     editor <- gsub("^editor editor[0-9].*$", 
-                   "<-- This paragraph has been editted -->", editor)
-    
-    # Search empty lines (in editor) and remove them.
-    for (i in 1:length(editor.chunks)) {
-        temp2 <- grep("^editor editor[0-9].*$", editor[editor.chunks[[i]]])
-        temp3 <- which(nchar(editor[editor.chunks[[i]]]) == 0)
-        editor.chunks[[i]] <- editor.chunks[[i]][-c(temp2,temp3)]
-    }
-    
+                   "<!-- This paragraph has been edited -->", editor)
+
+    #### PAUL's PLAN ####
+    # For each editable content ...
+    # Use gsub() to remove everything EXCEPT the <p ...> tag at the
+    # start of the first line of editable content (or whatever tag is
+    # at the start of the first line of editable content
+    # [e.g., could be a <div>])
+    # Add that <p ...> in front of the new 'editor' value
+    # Add </p> at the end of the new 'editor' value
+    # Replace old 'src' value with new 'editor' value
+
+
+
+
+
     # Using the same idea as above, remove "<p>" tags.
     for (i in 1:length(src.chunks)) {
         temp4 <- grep('(contenteditable=\"true\")|(^.*</p>.*$)', 
