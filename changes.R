@@ -1,6 +1,6 @@
-    # Decided to use Attempt.edit.html instead of Attempt.post.html
-    #  due to <p contendeditable> tags being easy to make use of.
-    src <- readLines("Attempt.edit.html")
+    # Using "Attempt.save.html" as it's the same as "Attempt.edit.html" with
+    #  annotations added.
+    src <- readLines("Attempt.save.html")
     editor <- readLines("test-changes.txt")
     
     ######################## "test-changes.txt" bits #######################
@@ -16,7 +16,7 @@
     editor.end <- c(editor.end, length(editor))
     
     # Each element in this list represents the lines corresponding to
-    # each "editor" chunk.
+    # each "editor" chunk (I separated each chunk into each element of the list).
     editor.chunks <- mapply(seq, editor.start, editor.end, SIMPLIFY = FALSE)
     
     # Which of the "editor..." lines contain "NOT MODIFIED"?
@@ -24,7 +24,7 @@
     temp1 <- grepl("NOT MODIFIED", editor[editor.start])
     which.chunks <- which(temp1 == FALSE)
     
-    # A list of indices for the lines editted.
+    # A list of indices for the lines editted (unwanted/unmodified lines discarded).
     editor.chunks <- editor.chunks[which.chunks]
     
     ####################### "Attempt.edit.html" bits #######################
@@ -88,10 +88,13 @@
                         #  that + how many lines are added.
                         src.chunks[[i]] <- 
                             c(src.chunks[[i]], 
+                              # Last element in the i_th src.chunks + 1 as 
                               seq(src.chunks[[i]][length(src.chunks[[i]])] + 1,
                                   src.chunks[[i]][length(src.chunks[[i]])] + abs(temp5)))
                         
                         # Also update all the elements from the n+1_th src.chunks.
+                        # I want to add abs(temp5) amount to all elements in src.chunks
+                        #  from n+1_th src.chunks.
                         ############## Need Paul's help #################################
                         for (j in i:length(src.chunks)) {
                             src.chunks[[j+1]] <- src.chunks[[j+1]] + abs(temp5)
@@ -108,3 +111,4 @@
     # Still not complete.
     # More work is needed in annotation before I can complete this function.
     src
+
