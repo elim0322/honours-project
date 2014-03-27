@@ -49,8 +49,8 @@
       });
     }
     
-    <!-- action for "submit" button
-         to get rid of old annotations and changes -->
+    /* action for "submit" button
+       to get rid of old annotations and changes */
     submit = function() {
       savechanges();
       var annotations = $('div.chunk').data('annotator').plugins['Store'].annotations;
