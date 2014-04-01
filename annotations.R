@@ -1,7 +1,7 @@
 library(jsonlite)
 library(XML)
 
-annotations <- function(infile = NULL, outfile = NULL, testfile = NULL) {
+annotations <- function(infile = NULL, outfile = NULL) {
     if (is.null(infile)) {
         infile <- load.dir()
     }
@@ -57,8 +57,8 @@ annotations <- function(infile = NULL, outfile = NULL, testfile = NULL) {
         # which(temp != -1) selects the correct node, as it will not be -1
         # (being -1 indicates the pattern not matched in txt)
         lineNumber <- getLineNumber(node[[which(temp != -1)]])
-        src <- readLines("Attempt.save.html", warn = FALSE)
+        src <- readLines(outfile, warn = FALSE)
         src <- append(src, anno.tags, after = lineNumber - 1)
-        writeLines(src, "Attempt.save.html")
+        writeLines(src, outfile)
     }
 }
