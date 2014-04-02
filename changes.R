@@ -6,7 +6,7 @@ changes <- function(infile = NULL, outfile = NULL) {
         stop("infile is not a save.html file")
     
     src <- readLines(infile)
-    editor <- readLines("test-changes-01.txt")
+    editor <- readLines("changes.txt")
     
     ######################## "test-changes.txt" bits #######################
     # editor.start: start lines of "editor" chunks in editor
@@ -34,6 +34,7 @@ changes <- function(infile = NULL, outfile = NULL) {
     ####################### "Attempt.edit.html" bits #######################
     # Find "contenteditable" <p> tags, then remove everything except <p ... >
     #  tag as we want to retain these <p> tags.
+    # ASSUMES that there is AT LEAST 1 LINE between <p> and </p>
     src.start <- grep('contenteditable=\"true\"', src)
     src[src.start] <- gsub("(^<p\\s*.+>).+$", "\\1", src[src.start])
     # Find </p> tags, then remove everything except </p>
@@ -58,64 +59,20 @@ changes <- function(infile = NULL, outfile = NULL) {
     editor <- gsub("^editor editor[0-9].*$", 
                    "<!-- This paragraph has been edited -->", editor)
     
-    #### PAUL's PLAN ####
-    # For each editable content ...
-    # Use gsub() to remove everything EXCEPT the <p ...> tag at the
-    # start of the first line of editable content (or whatever tag is
-    # at the start of the first line of editable content
-    # [e.g., could be a <div>])
-    # Add that <p ...> in front of the new 'editor' value
-    # Add </p> at the end of the new 'editor' value
-    # Replace old 'src' value with new 'editor' value
-    
     # Check if the lengths are equal:
-    if (length(editor.chunks) == length(src.chunks)) {
-        # Recycling rule and other rules prevent me from replacing a vector with
-        #  another vector when they are of unequal length. So I need to make sure
-        #  that the length is equal by adding lines to the one with smaller length.
-        for (i in 1:length(editor.chunks)) {
-            dif <- length(src.chunks[[i]]) - length(editor.chunks[[i]])
-            if (dif != 0) {
-                if (dif > 0) {
-                    # Here length(src) is greater than length(editor), so need to add
-                    #  lines in editor to match the length, then replace.
-                    src[src.chunks[[i]]] <- c(editor[editor.chunks[[i]]], 
-                                              rep("#ERIC'S@SPECIAL@MARKER@LINES#", temp5))
-                } else if (dif < 0) {
-                    # Here length(editor) > length(src), so need to add lines in src
-                    #  and do the same as above.                
-                    src <- append(src, rep("#ERIC'S@SPECIAL@MARKER@LINES#", abs(temp5)),
-                                  # The marker line is added after the last line
-                                  after = src.chunks[[i]][length(src.chunks[[i]])])
-                    # The i_th src.chunks needs to be updated so I am combining a
-                    #  sequence from the last element of the i_th src.chunks up to
-                    #  that + how many lines are added.
-                    src.chunks[[i]] <- 
-                        c(src.chunks[[i]], 
-                          # Seq from last element + 1 to that + temp5.
-                          seq(src.chunks[[i]][length(src.chunks[[i]])] + 1,
-                              src.chunks[[i]][length(src.chunks[[i]])] + abs(temp5)))
-                    
-                    src[src.chunks[[i]]] <- editor[editor.chunks[[i]]]
-                    # Also update all the elements from the i+1_th src.chunks if
-                    #  i+1 subscript is not out of bounds (the check below).
-                    # By adding abs(temp5) amount to all elements in src.chunks
-                    #  from i+1_th src.chunks to account for the added lines.
-                    for (j in (i+1):length(editor.chunks)) {
-                        src.chunks[[j]] <- src.chunks[[j]] + abs(temp5)
-                    }
-                }
-            } else if (dif == 0) {
-                src[src.chunks[[i]]] <- editor[editor.chunks[[i]]]
-            }
-        }
+    if (length(editor.chunks) != length(src.chunks)) {
+        stop("Number of new content does not equal number of old content")
     }
-    
-    # Remove special marker lines if any present in src.
-    if (any(grepl("#ERIC'S@SPECIAL@MARKER@LINES#", src))) {
-        src <- src[-c(grep("#ERIC'S@SPECIAL@MARKER@LINES#", src))]
-    }
-    
+
+    # Go BACKWARDS through file, replacing last chunk first
+    # (so that indices for lines-to-change remain valid)
+    for (i in length(editor.chunks):1) {
+        oldLines <- src.chunks[[i]]
+        newLines <- editor.chunks[[i]]
+        firstOldLine <- src.chunks[[i]][1]
+        # Rip out old lines and append new lines in the old place
+        src <- append(src[-oldLines], editor[newLines], firstOldLine - 1)
+    }        
     
     if (is.null(outfile)) {
         outfile <- infile
