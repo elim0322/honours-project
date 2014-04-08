@@ -2,11 +2,11 @@ changes <- function(infile = NULL, outfile = NULL) {
     if (is.null(infile)) {
         infile <- load.dir()
     }
-    if (!grepl("save.html$", infile))
-        stop("infile is not a save.html file")
+    if (!grepl("anns.html$", infile))
+        stop("infile is not an anns.html file")
     
     src <- readLines(infile)
-    editor <- readLines("changes.txt")
+    editor <- readLines("test-changes.txt")
     
     ######################## "test-changes.txt" bits #######################
     # editor.start: start lines of "editor" chunks in editor
@@ -36,18 +36,29 @@ changes <- function(infile = NULL, outfile = NULL) {
     #  tag as we want to retain these <p> tags.
     # ASSUMES that there is AT LEAST 1 LINE between <p> and </p>
     src.start <- grep('contenteditable=\"true\"', src)
+    # Remove everything except </p> and insert a tab 
     src[src.start] <- gsub("(^<p\\s*.+>).+$", "\\1", src[src.start])
+    
     # Find </p> tags, then remove everything except </p>
     endTags <- grep('</p>', src)
-    src[endTags] <- gsub("^.+(</p>$)", "\\1", src[endTags])
     
-    src.end <- vector("numeric", length(src.start))
     # There could be more </p> tags than <p contenteditable="true"> tags.
     # So I'm subsetting for </p> tags that are after the <p content...>
     #  tags and finding the smallest(min) </p> tags to ensure that there
     #  are no other </p> tags between them.
+    src.end <- vector("numeric", length = length(src.start))
     for (i in 1:length(src.start)) {
         src.end[i] <- min(endTags[src.start[i] < endTags])
+        # Use regexpr to get the length of any empty spaces
+        #  from start up to "<p.."
+        temp <- regexpr("<p", src[src.start[i]])
+        # Take the "match.length" attribute.
+        temp <- attr(temp, "match.length")
+        # Generate appropriate number of spaces.
+        temp <- paste(rep(" ", temp), collapse = "")
+        src[src.end] <- gsub("^.*(</p>$)",
+                                paste(temp, "\\1", sep = ""),
+                                src[src.end[i]])
     }
     # The lines to be edited are lines after <p...> and before </p>.
     src.chunks <- mapply(FUN = seq, src.start+1, src.end-1, SIMPLIFY = FALSE)
@@ -72,10 +83,10 @@ changes <- function(infile = NULL, outfile = NULL) {
         firstOldLine <- src.chunks[[i]][1]
         # Rip out old lines and append new lines in the old place
         src <- append(src[-oldLines], editor[newLines], firstOldLine - 1)
-    }        
+    }
     
     if (is.null(outfile)) {
-        outfile <- infile
+        outfile <- gsub("anns.html", "save.html", infile)
     }
     writeLines(src, outfile)
 }
