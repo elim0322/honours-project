@@ -37,7 +37,7 @@ changes <- function(infile = NULL, outfile = NULL) {
     # ASSUMES that there is AT LEAST 1 LINE between <p> and </p>
     src.start <- grep('contenteditable=\"true\"', src)
     # Remove everything except </p> and insert a tab 
-    src[src.start] <- gsub("(^<p\\s*.+>).+$", "\\1", src[src.start])
+    src[src.start] <- gsub("(.+?<p.+?>).+$", "\\1", src[src.start])
     
     # Find </p> tags, then remove everything except </p>
     endTags <- grep('</p>', src)
@@ -49,16 +49,6 @@ changes <- function(infile = NULL, outfile = NULL) {
     src.end <- vector("numeric", length = length(src.start))
     for (i in 1:length(src.start)) {
         src.end[i] <- min(endTags[src.start[i] < endTags])
-        # Use regexpr to get the length of any empty spaces
-        #  from start up to "<p.."
-        temp <- regexpr("<p", src[src.start[i]])
-        # Take the "match.length" attribute.
-        temp <- attr(temp, "match.length")
-        # Generate appropriate number of spaces.
-        temp <- paste(rep(" ", temp), collapse = "")
-        src[src.end] <- gsub("^.*(</p>$)",
-                                paste(temp, "\\1", sep = ""),
-                                src[src.end[i]])
     }
     # The lines to be edited are lines after <p...> and before </p>.
     src.chunks <- mapply(FUN = seq, src.start+1, src.end-1, SIMPLIFY = FALSE)

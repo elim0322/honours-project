@@ -38,33 +38,29 @@ annotations <- function(infile = NULL, outfile = NULL) {
         # what <- ann$quote: this line became following:
         # If ann$quote contains " / ",
         if (grepl(" / ", ann$quote)) {
-            temp <- unlist(strsplit(ann$quote, " / "))
-            if (length(temp) == 2) {
+            annText <- unlist(strsplit(ann$quote, " / "))
+            numText <- length(annText)
+            if (numText == 2) {
                 # If there are two words, then paste them
                 #  as "word1" & "word2".
-                what <- paste(temp, collapse = "\" & \"")
-            } else if (length(temp) >= 3) {
+                what <- paste(annText, collapse = "\" & \"")
+            } else if (numText >= 3) {
                 # If there are more than 2 words, then paste
-                #  them as "word1", "word2", ... (temp1).
-                # Then, paste temp1 with the last word as
+                #  them as "word1", "word2", ... (temp).
+                # Then, paste temp with the last word as
                 #  "word1", ... & "lastword"
-                temp1 <- paste(temp[1:length(temp)-1], collapse = "\", \"")
-                what <- paste(temp1, temp[length(temp)], collapse = "\" & \"")
+                temp <- paste(annText[-numText], collapse = "\", \"")
+                what <- paste(temp, annText[numText], collapse = "\" & \"")
             }
             # Just trying to use the correct grammar. Plural:
-            anno.tags <- c('    <p class="annotation" style = "background-color:coral">', 
-                           paste("    The texts \"", what, 
-                                 "\" were annotated with the message \"", 
-                                 annotation, "\" by \"", who, "\"", sep=""),
-                           "    </p>")
         } else {
-            temp <- ann$quote
-            anno.tags <- c('    <p class="annotation" style = "background-color:coral">', 
-                           paste("    The text \"", temp, 
-                                 "\" was annotated with the message \"", 
-                                 annotation, "\" by \"", who, "\"", sep=""),
-                           "    </p>")
+            annText <- what <- ann$quote
         }
+        anno.tags <- c('    <p class="annotation" style = "background-color:coral">', 
+                       paste("    The text \"", what, 
+                             "\" was annotated with the message \"", 
+                             annotation, "\" by \"", who, "\"", sep=""),
+                       "    </p>")
         
         xpath <- paste("/html/body/div[@class='chunk']", where.start, 
                              "/ancestor::div[@class='chunk']", sep = "")
@@ -76,13 +72,13 @@ annotations <- function(infile = NULL, outfile = NULL) {
         match <- function(t) {
             # Substring "t" from the position of where$startOffset.
             # Search for that pattern in what.
-            regexpr(temp[1], substring(t, where$startOffset), fixed = TRUE)
+            regexpr(annText[1], substring(t, where$startOffset), fixed = TRUE)
         }
         # Which txt has the matching pattern.
-        temp2 <- sapply(txt, match)
-        # which(temp != -1) selects the correct node, as it will not be -1
+        txtMatch <- sapply(txt, match)
+        # which(txtMatch != -1) selects the correct node, as it will not be -1
         # (being -1 indicates the pattern not matched in txt)
-        lineNumber <- getLineNumber(node[[which(temp2 != -1)]])
+        lineNumber <- getLineNumber(node[[which(txtMatch != -1)]])
         src <- readLines(outfile, warn = FALSE)
         src <- append(src, anno.tags, after = lineNumber - 1)
         writeLines(src, outfile)
