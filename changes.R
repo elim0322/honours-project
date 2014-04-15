@@ -1,3 +1,9 @@
+nspace <- function(x) {
+    reg <- regexpr("<p", x)
+    n <- attr(reg, "match.length")
+    paste(rep(" ", n), collapse = "")
+}
+
 changes <- function(infile = NULL, outfile = NULL) {
     if (is.null(infile)) {
         infile <- load.dir()
@@ -32,28 +38,59 @@ changes <- function(infile = NULL, outfile = NULL) {
     editor.chunks <- editor.chunks[-which.chunks]
     
     ####################### "Attempt.edit.html" bits #######################
-    # Find "contenteditable" <p> tags, then remove everything except <p ... >
-    #  tag as we want to retain these <p> tags.
-    # ASSUMES that there is AT LEAST 1 LINE between <p> and </p>
+    # Find "contenteditable" <p> tags and all </p> tags.
     src.start <- grep('contenteditable=\"true\"', src)
-    # Remove everything except </p> and insert a tab 
-    src[src.start] <- gsub("(.+?<p.+?>).+$", "\\1", src[src.start])
+    endTags <- grep("^.*</p>.*$", src)
     
-    # Find </p> tags, then remove everything except </p>
-    endTags <- grep('</p>', src)
+    # Find which lines are to be edited.
+    src.start <- src.start[-which.chunks]
+    
+    # Find which element in src.start is equal to which element in endTags.
+    # This is finding which line has both <p> and </p> (ie no line between).
+    same.lines <- src.start[which(src.start %in% endTags)]
+    if (length(same.lines) > 0) {
+        # Insert an "empty line" and a "</p>" line after each line with both 
+        #  <p> and </p> tags.
+        for (i in length(same.lines):1) {
+            s <- nspace(src[same.lines[i]])
+            src <- append(src, c("empty line", paste(s, "</p>", sep="")),
+                          after = same.lines[i])
+        }
+    }
+    
+    # Find which lines contain <p> and </p> tags with no lines in between.
+    src.start <- grep('contenteditable=\"true\"', src)
+    src.start <- src.start[-which.chunks]
+    endTags <- grep("^.*</p>.*$", src)
+    next.lines <- src.start[which(src.start %in% (endTags-1))]
+    if (length(next.lines) > 0) {
+        for (i in length(next.lines):1) {
+            src <- append(src, "empty line", after = next.lines[i])
+        }
+    }
     
     # There could be more </p> tags than <p contenteditable="true"> tags.
     # So I'm subsetting for </p> tags that are after the <p content...>
     #  tags and finding the smallest(min) </p> tags to ensure that there
     #  are no other </p> tags between them.
+    endTags <- grep("^.*<.p>.*$", src)
     src.end <- vector("numeric", length = length(src.start))
     for (i in 1:length(src.start)) {
         src.end[i] <- min(endTags[src.start[i] < endTags])
     }
+    
+    # Remove everything except <p ...> and </p>.
+    src.start <- grep('contenteditable=\"true\"', src)
+    src.start <- src.start[-which.chunks]
+    for (i in 1:length(src.start)) {
+        s <- nspace(src[src.start[i]])
+        src[src.start] <- gsub("(.+?<p.+?>).+$", "\\1", src[src.start[i]])
+        src[src.end] <- gsub("^.*(</p>.*$)", paste(s, "\\1", sep=""),
+                             src[src.end[i]])
+    }
+    
     # The lines to be edited are lines after <p...> and before </p>.
     src.chunks <- mapply(FUN = seq, src.start+1, src.end-1, SIMPLIFY = FALSE)
-    # A list of indices for the lines to be editted.
-    src.chunks <- src.chunks[-which.chunks]
     
     ####################### Remove unnecessary lines #######################
     # Replace each "editor lines" with a comment.

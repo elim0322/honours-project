@@ -1,3 +1,4 @@
+library(XML)
 snap <- function(infile = NULL, outfile = NULL) {
     if (is.null(infile)) {
         infile <- load.dir()
@@ -7,19 +8,20 @@ snap <- function(infile = NULL, outfile = NULL) {
     
     src <- readLines(infile)
     
-    # 1st: matches for <p blah blah...> (like <p class =...>)
-    # 2nd: matches for <p>
-    # 3rd: matches for <p>blah blah...
-    modLines <- grep("(^\\s*<p\\s+.*>$)|(^\\s*<p>\\s*$)|(^\\s*<p>\\s*.+$)", src)
-    # Inserting special markers after the first ">"
-    # Kind of protection to select the ">" after "<p"
-    src[modLines] <- gsub("(^.+.+?>)", "\\1~!@MARKER@!~", src[modLines])
-    # Assuming below lines all end with ">"
-    src[modLines] <- gsub(">~!@MARKER@!~", ' contenteditable="true">', src[modLines])
+    ###################################
+    html <- htmlParse(infile)
+    # Select all <p> tags regardless of their locations.
+    node <- getNodeSet(html, "//p")
+    for (i in 1:length(node)) {
+        tag.lines <- getLineNumber(node[[i]])
+        # Search for "<p...>" and replace the first ">" with
+        #  'contenteditable="true"'
+        src[tag.lines] <- gsub("(^.*<.*p.*).*?>",
+                               '\\1 contenteditable="true">', src[tag.lines])
+    }
     
     # Load jQuery, ckeditor.js, annotator.js
     js <- readLines("edit.js")
-    
     saver <- readLines("button.html")
     
     # Only one head tag per html document
