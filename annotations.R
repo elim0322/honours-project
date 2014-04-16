@@ -64,7 +64,7 @@ annotations <- function(infile = NULL, outfile = NULL) {
         
         xpath <- paste("/html/body/div[@class='chunk']", where.start, 
                              "/ancestor::div[@class='chunk']", sep = "")
-        html <- htmlParse("Attempt.anns.html")
+        html <- htmlParse(infile)
         node <- getNodeSet(html, xpath)
         
         # xmlValues for the nodes.
