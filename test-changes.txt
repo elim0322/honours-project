@@ -1,14 +1,14 @@
-editor editor1:
-TEST
+editor editor1 NOT MODIFIED
 
-editor editor2:
-<code>next.term</code> - Generates the next term from the current term following this <a href="https://www.stat.auckland.ac.nz/~stat380/downloads/assign01.pdf">equation</a>.<br />
-<strong>Argument</strong> &rarr; x is a positive integer<br />
-<strong>Description</strong> &rarr; The function substrings each digit of the number x which is then sequentially saved into a numeric vector.........blah blah &lt;TEST&gt;<br />
-<strong>Return value</strong> &rarr; A number corresponding to the next term <em>x</em><sub><em>i</em>+1</sub>
+editor editor2 NOT MODIFIED
 
 editor editor3:
-Here are some examples: test
+We can also produce plots (centered by the option <code>fig.align=&#39;center&#39;</code>): some new content
 
 editor editor4 NOT MODIFIED
+
+editor editor5 NOT MODIFIED
+
+editor editor6 NOT MODIFIED
+
 

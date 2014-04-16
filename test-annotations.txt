@@ -1,73 +1,38 @@
 {
+  "total": 1, 
   "rows": [
     {
-      "created": "2014-03-19T01:21:03.414473+00:00", 
-      "links": [
-        {
-          "rel": "alternate", 
-          "type": "text/html", 
-          "href": "http://annotateit.org/annotations/dpbG4aX8S86_0WJV5tIYFA"
-        }
-      ], 
-      "user": "pmur002", 
-      "updated": "2014-03-19T01:21:03.437757+00:00", 
-      "permissions": {
-        "delete": [], 
-        "update": [], 
-        "admin": [], 
-        "read": [
-          "group:__world__"
-        ]
-      }, 
-      "id": "dpbG4aX8S86_0WJV5tIYFA", 
-      "quote": "[1] 14", 
-      "ranges": [
-        {
-          "endOffset": 9, 
-          "startOffset": 3, 
-          "end": "/div[1]/div[3]/pre[1]", 
-          "start": "/div[1]/div[3]/pre[1]"
-        }
-      ], 
-      "consumer": "annotateit", 
-      "uri": "http://stat220.stat.auckland.ac.nz/cke/test.html", 
-      "text": "paul test"
-    }, 
-    {
-      "created": "2014-03-10T18:25:41.936712+00:00", 
-      "links": [
-        {
-          "rel": "alternate", 
-          "type": "text/html", 
-          "href": "http://annotateit.org/annotations/SKOamCitRTWQ1xdr5a4LtA"
-        }
-      ], 
       "user": "e.lim0322", 
-      "updated": "2014-03-10T18:25:41.948881+00:00", 
-      "permissions": {
-        "delete": [], 
-        "update": [
-          "group:__consumer__"
-        ], 
-        "admin": [], 
-        "read": [
-          "group:__world__"
-        ]
-      }, 
-      "uri": "http://stat220.stat.auckland.ac.nz/cke/test.html", 
-      "quote": "prod", 
       "ranges": [
         {
-          "endOffset": 0, 
-          "startOffset": 122, 
-          "end": "/div[1]/div[1]/pre[1]/span[32]", 
-          "start": "/div[1]/div[1]/pre[1]"
+          "start": "/div[3]/div[1]/pre[1]/span[1]", 
+          "end": "/div[3]/div[1]/pre[1]/span[6]", 
+          "startOffset": 3, 
+          "endOffset": 1
         }
       ], 
+      "permissions": {
+        "admin": [], 
+        "delete": [], 
+        "read": [
+          "group:__world__"
+        ], 
+        "update": []
+      }, 
+      "uri": "http://stat220.stat.auckland.ac.nz/cke/test.html", 
+      "links": [
+        {
+          "type": "text/html", 
+          "href": "http://annotateit.org/annotations/N21GwbzjR9uPRPCC0EPx2Q", 
+          "rel": "alternate"
+        }
+      ], 
+      "created": "2014-04-16T02:15:26.208630+00:00", 
+      "id": "N21GwbzjR9uPRPCC0EPx2Q", 
+      "updated": "2014-04-16T02:15:26.228269+00:00", 
+      "quote": "ot(hp, mpg, data = mtcars) + g", 
       "consumer": "annotateit", 
-      "id": "SKOamCitRTWQ1xdr5a4LtA", 
-      "text": "HELLO"
+      "text": "add an annotation"
     }
-  ], 
-  "total": 2
+  ]
 }
