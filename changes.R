@@ -40,6 +40,16 @@ changes <- function(infile = NULL, outfile = NULL) {
     ####################### "Attempt.edit.html" bits #######################
     # Find "contenteditable" <p> tags and all </p> tags.
     src.start <- grep('contenteditable=\"true\"', src)
+    
+    # Only keep "<tag " and delete all attributes, etc. (can't find a way to
+    #  just select "<tag" without the empty space)
+    oTags <- gsub("^.*(<.+\\s+?).+$", "\\1", src[src.start])
+    
+    # Frist get rid of an empty space at the end for every oTags. Then, replace
+    #  "<" with "</" to get end tags matching the opening tags.
+    eTags <- gsub(" ", ">", oTags)
+    eTags <- gsub("<", "</", eTags)
+    
     endTags <- grep("^.*</p>.*$", src)
     
     # Find which lines are to be edited.
@@ -80,6 +90,8 @@ changes <- function(infile = NULL, outfile = NULL) {
         oldLines <- src.chunks[[i]]
         newLines <- editor.chunks[[i]]
         firstOldLine <- src.chunks[[i]][1]
+        # 
+        et
         # Rip out old lines and append new lines in the old place
         src <- append(src[-oldLines],
                       c(new.src[i], editor[newLines],

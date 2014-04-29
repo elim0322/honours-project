@@ -1,0 +1,88 @@
+<html>
+
+<head>
+<title>Example</title>
+</head>
+
+<body style="background-color:lightgrey;">
+
+<h1 style="background-color:red;">This is a heading</h1>
+<p style="background-color:green;">This is a paragraph.</p>
+
+<div>
+    <p> Hello </p>
+    <div>
+        <p> World! </p>
+        <div>
+            <p> Hello </p>
+            <p> World! </p>
+        <div>
+    </div>
+</div>
+
+<p>This is an R HTML document. When you click the <b>Knit HTML</b> button a web page will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:</p>
+
+<!--begin.rcode
+summary(cars)
+end.rcode-->
+
+<p>You can also embed plots, for example:</p>
+
+<!--begin.rcode fig.width=7, fig.height=6
+plot(cars)
+end.rcode-->
+
+<table style="width:300px">
+Table:
+<tr>
+    <td>Jill</td>
+    <td>Smith</td>    	
+    <td>50</td>
+    </tr>
+<tr>
+    <td>Eve</td>
+    <td>Jackson</td>		
+    <td>94</td>
+</tr>
+<tr>
+    <td>John</td>
+    <td>Doe</td>		
+    <td>80</td>
+</tr>
+</table>
+
+<div style="color:blue">
+    <h2>This is a heading in a div element</h2>
+    <p>This is some text in a div element.</p>
+    <p>This is <span class="chunk">a test in a div with a span.</span></p>
+    <div>
+        <p>I have many <span style="color:blue">blue</span> pens.</p>
+<!--begin.rcode
+1+1
+end.rcode-->
+        <table style="width:300px">
+        <tr>
+            <td>Jill</td>
+            <td>Smith</td>        
+            <td>50</td>
+            </tr>
+        <tr>
+            <td>Eve</td>
+            <td>Jackson</td>		
+            <td>94</td>
+        </tr>
+        <tr>
+            <td>John</td>
+            <td>Doe</td>		
+            <td>80</td>
+        </tr>
+        </table>
+    </div>
+</div>
+
+<div id="noteditor">
+    <p>This is a <span class="notchunk" style="color:red">test</span> in a div.</p>
+</div>
+
+</body>
+</html>
