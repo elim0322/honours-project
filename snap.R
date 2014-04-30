@@ -21,7 +21,7 @@ snap <- function(infile = NULL, outfile = NULL, upload = TRUE) {
         tag.lines <- getLineNumber(node[[i]])
         # Search for "<p...>" and replace the first ">" with
         #  'contenteditable="true"'
-        src[tag.lines] <- gsub("(^.*<.*).*?>",
+        src[tag.lines] <- gsub("(^.*?<.*?)>",
                                '\\1 contenteditable="true">', src[tag.lines])
     }
     
