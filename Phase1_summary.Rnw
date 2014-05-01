@@ -1,0 +1,139 @@
+\documentclass[a4paper]{article} 
+    \parindent= 0cm
+    \parskip=2ex
+    \usepackage{fancyvrb}
+    \usepackage{listings}
+        \lstset{
+            basicstyle=\small\ttfamily,
+            columns=flexible,
+            breaklines=true
+        }
+    \usepackage{url}
+\begin{document}
+    \title{Introduction to Knitr Round Trip: Phase 1}
+    \author{Eric Lim}
+    \date{\today}
+    \maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+The \textbf{knitr} is a wonderful R package that enables interaction between various different types of documents and R. It allows us to embed R codes as well as their results into the different document types of one's choice. Through diverse settings, one can tailor the way R code is displayed in final documents according to specific needs, thus a pleasantly structured, satisfactory document can be achieved.
+
+However, using this package is almost always a one-way trip, meaning source documents, containing R codes to be displayed, generate final documents as a output, not the other way around. We want to be able to edit output documents as it is often the easier process than to search and modify specific lines of code in the source documents, especially if the output documents are generated from multiple source documents. Hence, the project we are working on has its main focus on making this ideal round trip possible, and if not what possible issues prevent this from happening. For a start, we deal with simple HTML documents in the hopes of finding a generalised approach for our goal.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Functions}
+A total of five functions are developed to carry out main tasks along with a few supplementary functions to support their roles.
+\subsection{\texttt{sew()}}
+Once a source document is knitted (using the \texttt{knit()} function), any R code chunks in the document are converted to a format to match the document type and be displayed. In this process, the original lines of R code are heavily modified (at least in HTML documents) to raise an alarm for possibility of a round trip.
+
+To make a safe round trip, we need a way to preserve the original R code. The way the \textbf{knitr} package incorporates R codes into HTML documents is through exploitation with HTML comments. Lines of R code, to be displayed, are included in ordinary comment tags with addition of \texttt{begin.rcode} and \texttt{end.rcode} attached to the opening and end comment tags, respectively. This allows \texttt{knit()} to identify sections (or chunks) of R codes and converts them into an appropriate format of display. We can, in turn, use similar idea to preserve the original code in a way that \texttt{knit()} does not detect using these comment tags.
+
+We have decided to use an algorithm in \texttt{sew()} that when a source document is passed through, a slightly modified copy of each R code chunk is created as a comment prior to being knitted \texttt{sew()}.
+
+When \texttt{sew()} is called on an Rhtml document (HTML source document), a new document with a ``post.Rhtml" extention is created inside the user's current working directory (by default). In the new document, copies of the original R code chunks are generated and inserted after their corresponding originals. These copies are commented out with a keyword ``keep" as a marker, which is consistently used in later steps of the round trip. Then, \texttt{knit()} treats them as ordinary comments and they are excluded from display. Although these ``copies" are hidden from the display of output documents, one can easily gain access to them via text editors. Hence, it becomes possible that successive output documents retain the contents of the original R codes, even if the codes are altered for display.
+
+A brief example may be considered to demonstrate \texttt{sew()}...
+\begin{Verbatim}[frame=single]
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Example</title>
+  </head>
+  <body>
+    <!--This is how an R code is displayed-->
+    <p>Example:</p>
+    <!--begin.rcode 
+     1+1
+    end.rcode-->
+  </body>
+</html>
+\end{Verbatim}
+
+The following code calls \texttt{sew()} on the above Rhtml document...
+\begin{verbatim}
+> source("sew.R")
+> sew("Example.Rhtml")
+\end{verbatim}
+
+... and we observe the copied R code in the resulting post.Rhtml document...
+\begin{Verbatim}[frame=single]
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Example</title>
+  </head>
+  <body>
+    <!--This is how an R code is displayed-->
+    <p>Example:</p>
+    <!--begin.rcode 
+     1+1
+    end.rcode-->
+    <!--begin.keepcode 
+     1+1
+    end.rcode-->
+  </body>
+</html>
+\end{Verbatim}
+
+This post.Rhtml document is, then, knitted using the following...
+\begin{verbatim}
+> library(knitr)
+> knit("Example.post.Rhtml")
+\end{verbatim}
+
+... to produce a ``post.html" document as below...
+\begin{lstlisting}[frame=single]
+<!DOCTYPE html>
+<html>
+  <head>
+<style type="text/css">
+.knitr.inline {
+    ...many lines of styles inserted by knitr...
+}
+</style>
+    <title>Example</title>
+  </head>
+  <body>
+    <!--This is how an R code is displayed-->
+    <p>Example:</p>
+<div class="chunk" id="unnamed-chunk-1"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl num">1</span> <span class="hl opt">+</span> <span class="hl num">1</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] 2
+</pre></div>
+</div></div>
+
+    <!--begin.keepcode 
+     1+1
+    end.rcode-->
+  </body>
+</html>
+\end{lstlisting}
+
+We can observe that knitting introduces its own definition of a style in which R codes and their results are presented on the output document (inside \texttt{style} tags), and the original R codes are converted into \texttt{div} elements with the attribute, \texttt{class="chunk"}.
+
+The ``copy" of the original R codes is still observable and remains untouched until the final step of the round trip.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{\texttt{snap()}}
+Our primary goal is to edit the html document that \texttt{knit()} produces. Since the purpose of html documents lies in the presentation of information on a web browser, the most reasonable approach is to implement a document editor that works on web browsers. There is one restriction that all contents in output HTML documents are editable except R codes and their results. The primary reason for the restriction is that it is impossible to run R codes from the output documents, thus there is little benefit to be gained from this. In addition, possible ethical issues arising from post modification of R codes and their results, after the output documents are generated, can be avoided. Thus, \texttt{snap()} is developed to allow for all contents of output documents to be editable while R-related contents to be annotated.
+
+To carry out the tasks mentioned above, \textbf{CKEditor} and \textbf{AnnotateIt} are selected as our tools. \textbf{CKEditor} is an open source HTML text editor that enables websites to be in an editable environment (like a document editor). And \textbf{AnnotateIt} provides ability to annotate on selected parts of website contents and save the annotations into the user's account (thus the user needs to be logged in their website \url{annotateit.org}. To further suit both resources to our specific need, a \textbf{JavaScript} function, \texttt{edit.js}, and a HTML document, \texttt{button.html}, are developed (by Paul).
+
+Using the \textbf{XML} package and \texttt{Xpath}, which is a reliable way to deal with different sections of an HTML document, \texttt{snap()} identifies all the top level elements inside the body of an HTML document and insert a special marker for each of them (\texttt{contenteditable="true"} attributes in the opening tags of the top level elements), excluding R-related contents. Then, these markers are recognised by \textbf{CKEditor} and their corresponding contents become editable. Similarly, the elements associated with R contents are recognised by \textbf{AnnotateIt} to be available for annotation.
+
+Once \texttt{snap()} is called upon a post.html document, a new document with the extention, ``edit.html" is created in the user's current working directory and is uploaded to a test server (\url{http://stat220.stat.auckland.ac.nz/cke/test}) using R packages called \textbf{httr} and \textbf{RCurl}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{\texttt{button.html}}
+The HTML document, \texttt{button.html}, is a set of instructions to create ``submit" and ``save" buttons in an HTML environment.
+
+\texttt{sew()} inserts it into the document upon which the function is called (post.html documents) so that the document contains the buttons.
+
+\subsubsection{\texttt{edit.js}}
+The main purpose of \texttt{edit.js} is to load two \textbf{JavaScript} functions, namely \texttt{ckeditor.js} and \texttt{annotator.js}, and a \textbf{JavaScript} library, \texttt{jquery.js}, from their respective web sources so their previously mentioned features are available on the output documents.
+
+Additionally, \texttt{edit.js} contains information on how ``submit" and ``save" buttons operate. When the ``save" button is pressed, the information on any changes made on the output document, via \textbf{CKEditor}, is saved as \texttt{test\-changes.txt} on the test server, \url{http://stat220.stat.auckland.ac.nz/cke/test-changes.txt}. And changes through \textbf{AnnotateIt} are saved separately as \texttt{test-annotations.txt} on the test server, \url{http://stat220.stat.auckland.ac.nz/cke/test-annotations.txt}.
+
+
+\end{document}
