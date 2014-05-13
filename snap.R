@@ -11,7 +11,7 @@ snap <- function(infile = NULL, outfile = NULL, upload = TRUE) {
     
     src <- readLines(infile)
     
-    ####################### Add 'contenteditable="true"' #######################
+    ####################### Add 'contenteditable="true"' ######################
     html <- htmlParse(infile)
     # Select all the child nodes of the body element (i.e. all top level
     #  elements inside body tags) that do not have "class='chunk'" attributes.
@@ -19,17 +19,26 @@ snap <- function(infile = NULL, outfile = NULL, upload = TRUE) {
     
     for (i in 1:length(node)) {
         tag.lines <- getLineNumber(node[[i]])
-        # Search for "<p...>" and replace the first ">" with
-        #  'contenteditable="true"'
-        src[tag.lines] <- gsub("(^.*?<.*?)>",
-                               '\\1 contenteditable="true">', src[tag.lines])
+        id.lines <- grep("id=[\"]", src[tag.lines])
+        # Generate id attributes
+        editorID <- paste("id=", '\"Editor-', i, '\">', sep="")
+        # if there is no id attribute, insert one
+        if (length(id.lines)==0) {
+            attr <- paste('\\1 contenteditable=\"true\" ', editorID, sep="")
+            # Search for "<tag...>" and replace the first ">" with
+            #  'contenteditable="true"'
+            src[tag.lines] <- gsub("(^.*?<.*?)>", attr, src[tag.lines])
+        } else {    # otherwise just add contenteditable="true" attr
+            attr <- '\\1 contenteditable=\"true\"'
+            src[tag.lines] <- gsub("(^.*?<.*?)>", attr, src[tag.lines])
+        }
     }
     
-    ################## Load jQuery, ckeditor.js, annotator.js ##################
+    ################# Load jQuery, ckeditor.js, annotator.js ##################
     js <- readLines("edit.js")
     saver <- readLines("button.html")
     
-    ########################## Generate pieces of src ##########################
+    ######################### Generate pieces of src ##########################
     # Only one head tag per html document
     headLines <- grep("<head>", src)
     # Only one body tag per html document
@@ -42,7 +51,7 @@ snap <- function(infile = NULL, outfile = NULL, upload = TRUE) {
                       src[(headLines + 1):bodyLines],
                       src[(bodyLines + 1):length(src)])
     
-    ############################ Writing edit.html #############################
+    ############################ Writing edit.html ############################
     if (is.null(outfile)) {
         outfile <- gsub("post.html","edit.html", infile)
     }
@@ -53,7 +62,7 @@ snap <- function(infile = NULL, outfile = NULL, upload = TRUE) {
                  saver, srcPieces[[3]]), f)
     close(f)
     
-    ################################ FROM PAUL #################################
+    ################################ FROM PAUL ################################
     # Submitting file to be edited (instead of using upload.html via browser)
     if (upload) {
         POST("http://stat220.stat.auckland.ac.nz/cke/upload.php",

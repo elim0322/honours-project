@@ -25,13 +25,13 @@ sew <- function(infile = NULL, outfile = NULL) {
         stop("infile is not an Rhtml file")
     src <- readLines(infile)
     
-    ######################### inline R code chunks  #########################
+    ########################## inline R code chunks ###########################
     in.line <- grep("<!--\\s*rinline", src)
     for (i in 1:length(in.line)) {
         src[in.line][i] <- processRinline(src[in.line][i])
     }
     
-    ############### generate a list of R code chunks to "keep" ###############
+    ############### generate a list of R code chunks to "keep" ################
     R.begin <- grep("^.*<!--\\s*begin.rcode", src)
     R.end <- grep("^.*end.rcode-->$", src)
     
@@ -46,7 +46,7 @@ sew <- function(infile = NULL, outfile = NULL) {
         keep.list[[i]][1] <- newFirstLine
     }
     
-    ############################ write post.Rhtml ###########################
+    ############################ write post.Rhtml #############################
     for (i in length(R.end):1) {
         src <- append(src, keep.list[[i]], after = R.end[i])
     }

@@ -1,5 +1,7 @@
 library(jsonlite)
 library(XML)
+library(RCurl)
+library(httr)
 
 annotations <- function(infile = NULL, outfile = NULL) {
     if (is.null(infile)) {
@@ -8,8 +10,9 @@ annotations <- function(infile = NULL, outfile = NULL) {
     if (!grepl("edit.html$", infile))
         stop("infile is not an edit.html file")
     
-    ########## Extract useful information from "test-annotations.txt" using json ##########
-    temp <- readLines("test-annotations.txt", warn = FALSE)
+    #### Extract useful information from "test-annotations.txt" using json ####
+    temp <- getURL("http://stat220.stat.auckland.ac.nz/cke/test-annotations.txt",
+                   userpwd="cke:cke")
     json <- fromJSON(temp, simplifyVector = FALSE)
     
     # numAnn: number of annotations
