@@ -1,7 +1,7 @@
 \documentclass[a4paper]{article} 
-    \parindent= 0cm
-    \parskip=2ex
-    \usepackage{fancyvrb}
+    %\parindent=2em
+    \parskip=1ex
+    \usepackage{fancyvrb}    % frames around verbatim %
     \usepackage{listings}
         \lstset{
             basicstyle=\small\ttfamily,
@@ -9,17 +9,95 @@
             breaklines=true
         }
     \usepackage{url}
-\begin{document}
-    \title{Introduction to Knitr Round Trip: Phase 1}
-    \author{Eric Lim}
-    \date{\today}
-    \maketitle
+    \usepackage{hyperref}
+    \usepackage{tikz}
+    \usetikzlibrary{shapes.geometric, arrows}
 
+%%%%% flow chart configuration %%%%%
+\tikzstyle{simple} = [rectangle, rounded corners, text width=3cm, text centered, draw=black, align=center]
+\tikzstyle{startstop} = [rectangle, rounded corners, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=red!30]
+\tikzstyle{process1} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, text width=3cm, draw=black, fill=orange!30]
+\tikzstyle{process2} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, text width=3cm, draw=black, fill=blue!30]
+\tikzstyle{decision} = [diamond, minimum width=2cm, minimum height=1cm, text centered, draw=black, fill=green!30]
+\tikzstyle{arrow} = [thick,->,>=stealth]
+\tikzstyle{line} = [thick,-,>=stealth]
+
+\title{\textbf{Introduction to Knitr Round Trip: Phase 1 Summary}}
+\author{Eric Lim}
+\date{\today}
+
+\begin{document}
+  \maketitle
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%% Introduction
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
-The \textbf{knitr} is a wonderful R package that enables interaction between various different types of documents and R. It allows us to embed R codes as well as their results into the different document types of one's choice. Through diverse settings, one can tailor the way R code is displayed in final documents according to specific needs, thus a pleasantly structured, satisfactory document can be achieved.
+The \textbf{knitr} package is a wonderful R package that enables interaction between various different types of documents and R. It allows us to embed R code as well as the results from R code into the different document types of one's choice. Through diverse settings, one can tailor the way R code is displayed in final documents according to specific needs, leading to a pleasantly structured, satisfactory document.
 
-However, using this package is almost always a one-way trip, meaning source documents, containing R codes to be displayed, generate final documents as a output, not the other way around. We want to be able to edit output documents as it is often the easier process than to search and modify specific lines of code in the source documents, especially if the output documents are generated from multiple source documents. Hence, the project we are working on has its main focus on making this ideal round trip possible, and if not what possible issues prevent this from happening. For a start, we deal with simple HTML documents in the hopes of finding a generalised approach for our goal.
+\begin{figure}[h!]
+\centering
+  \begin{tikzpicture}[node distance=3cm]
+    \node(in)[simple]{Source document \\ (input)};
+    \node(out)[simple, right of=in, xshift=2cm]{Final document \\ (output)};
+    \draw[arrow](in)--node[anchor=south]{\textbf{knitr}}(out);
+    \end{tikzpicture}
+  \caption{Basic idea}  \label{fig:flow1}
+\end{figure}
+
+However, using this package is almost always a one-way trip (Figure \ref*{fig:flow1}), meaning source documents, containing R code to be displayed, generate final documents as output, not the other way around. In situations where a person who provides documents (using \textbf{knitr}) and another who reads or reviews the documents are involved, it is often difficult for the document provider to receive feedback from the reviewer and make appropriate changes. A good example of these situations would be when interaction between clients and consultatns is involved. Luckily, most R users are of professions that demand substantial amount of interaction with clients, such as statisticians.
+
+Since it is impossible to go back from final documents to source documents (i.e. final documents cannot be used to generate source documents), the reviewer would have to provide his or her feedback by either writing physically on the printed version of the final documents or electronically. The document provider, then, has to retify the source documents accordingly, and repeat the process of generating and presenting final documents to the reviewer. There is high possibility that this process can be of multiple times and can become tedious, not to mention the task of editing itself, especially when the final documents are generated from several source documents.
+
+Therefore, we want to be able to edit output documents directly as it is often the easier process. A possible solution is to allow reviewers (of the final documents) to interact directly with the final documents and be able to edit them. Then the document provider can revise and refine the edited documents as a final step. Time and resources, wasted otherwise, will be reduced significantly. To achieve the aforementioned solution, there must be a way to enable final documents to be converted to source documents. In other words, the one-way trip from source documents to final documents must incoporate another trip from the final to source documents.
+
+Hence, the project we are working on has its main focus on making this ideal round trip possible, and if not what possible issues prevent this from happening. For a start, we deal with simple HTML documents in the hopes of finding a generalised approach for our goal.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%% Overview
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Overview}
+
+\begin{figure}[ht!]
+\centering
+  \begin{tikzpicture}[node distance=2cm]
+    \node(start)[startstop]{untitled.Rhtml};
+    \node(sew)[process1, below of=start]{untitled.post.Rhtml};
+    \node(knit)[process1, below of=sew]{untitled.post.html};
+    \node(snap)[process2, right of=knit, xshift=3cm]{untitled.edit.html};
+    \node(anno)[process2, below of=snap]{untitled.anns.html};
+    \node(chgs)[process2, below of=anno]{untitled.save.html};
+    \node(rip)[startstop, left of=chgs, xshift=-3cm]{untitled.return.Rhtml};
+    \node(repeat)[decision, left of=knit, xshift=-3cm]{Repeat};
+    \draw[arrow](start)--node[anchor=west] {\texttt{sew()}} (sew);
+    \draw[arrow](sew)--node[anchor=west] {\texttt{knit()}} (knit);
+    \draw[arrow](knit)--node[anchor=south] {\texttt{snap()}} (snap);
+    \draw[arrow](snap)--node[anchor=west] {\texttt{annotations()}} (anno);
+    \draw[arrow](anno)--node[anchor=west]{\texttt{changes()}} (chgs);
+    \draw[arrow](chgs)--node[anchor=south] {\texttt{rip()}} (rip);
+    \draw[line, dashed](rip)-|(repeat);
+    \draw[arrow, dashed](repeat)|-(start);
+  \end{tikzpicture}
+\caption{Hypothetical round trip}  \label{flow:2}
+\end{figure}
+
+For different types of source documents, \textbf{knitr} requires users to wrap chunks of R code inside comments whose syntax corresponds to the type of source documents.
+<<>>=
+library(knitr)
+all_patterns$html
+@
+
+To illustrate how \textbf{knitr} works, a simple example of an HTML document can be considered. For different types of documents
+
+\begin{Verbatim}[frame=single]
+<html>
+<body>
+    <p>Here is a series from 1 to 10.</p>
+    <!--begin.rcode
+    1:100
+    end.rcode-->
+</body>
+</html>
+\end{Verbatim}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Functions}
