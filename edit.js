@@ -23,10 +23,12 @@
       var editorblocks = CKEDITOR.instances;
       for (i in editorblocks) {
         if (editorblocks[i].checkDirty()) {
-          output = output + 'editor ' + i + ':\n' + editorblocks[i].getData() +
+          output = output + 'EDITOR ' + editorblocks[i].name + ':\n' + 
+                   editorblocks[i].getData() +
                    '\n\n';
         } else {
-          output = output + 'editor ' + i + ' NOT MODIFIED\n\n';
+          output = output + 'EDITOR ' + editorblocks[i].name + 
+                   ' NOT MODIFIED\n\n';
           }
       }
       jQuery.ajax({

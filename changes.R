@@ -29,7 +29,7 @@ changes <- function(infile = NULL, outfile = NULL) {
     ###########################################################################
     # editor.start: start lines of "editor" chunks in editor
     # editor.end : end lines of "editor" chunks in editor
-    editor.start <- grep("^editor\\s.+", editor)
+    editor.start <- grep("^EDITOR\\s.+", editor)
     
     # -1 because each end line is a line before the next start line.
     editor.end <- editor.start - 1
