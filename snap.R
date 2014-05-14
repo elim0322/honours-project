@@ -19,19 +19,18 @@ snap <- function(infile = NULL, outfile = NULL, upload = TRUE) {
     
     for (i in 1:length(node)) {
         tag.lines <- getLineNumber(node[[i]])
-        id.lines <- grep("id=[\"]", src[tag.lines])
-        # Generate id attributes
-        editorID <- paste("id=", '\"Editor-', i, '\">', sep="")
+        id.attr <- xmlGetAttr(node[[i]], "id")
         # if there is no id attribute, insert one
-        if (length(id.lines)==0) {
-            attr <- paste('\\1 contenteditable=\"true\" ', editorID, sep="")
-            # Search for "<tag...>" and replace the first ">" with
-            #  'contenteditable="true"'
-            src[tag.lines] <- gsub("(^.*?<.*?)>", attr, src[tag.lines])
-        } else {    # otherwise just add contenteditable="true" attr
-            attr <- '\\1 contenteditable=\"true\"'
-            src[tag.lines] <- gsub("(^.*?<.*?)>", attr, src[tag.lines])
+        # otherwise just add contenteditable="true" attr
+        attr <- '\\1 contenteditable=\"true\"'
+        if (is.null(id.attr)) {
+            # Generate id attributes
+            editorID <- paste("id=", '\"Editor-', i, '\">', sep="")
+            attr <- paste(attr, editorID)
         }
+        # Search for "<tag...>" and replace the first ">" with
+        #  'contenteditable="true"'
+        src[tag.lines] <- gsub("(^.*?<.*?)>", attr, src[tag.lines])
     }
     
     ################# Load jQuery, ckeditor.js, annotator.js ##################
