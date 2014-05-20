@@ -25,12 +25,13 @@ snap <- function(infile = NULL, outfile = NULL, upload = TRUE) {
         attr <- '\\1 contenteditable=\"true\"'
         if (is.null(id.attr)) {
             # Generate id attributes
-            editorID <- paste("id=", '\"Editor-', i, '\">', sep="")
+            editorID <- paste("id=", '\"Editor-', i, '\"', sep="")
             attr <- paste(attr, editorID)
         }
         # Search for "<tag...>" and replace the first ">" with
         #  'contenteditable="true"'
-        src[tag.lines] <- gsub("(^.*?<.*?)>", attr, src[tag.lines])
+        src[tag.lines] <- gsub("(^.*?<.*?)>", 
+                               paste0(attr, '>'), src[tag.lines])
     }
     
     ################# Load jQuery, ckeditor.js, annotator.js ##################
@@ -63,9 +64,9 @@ snap <- function(infile = NULL, outfile = NULL, upload = TRUE) {
     
     ################################ FROM PAUL ################################
     # Submitting file to be edited (instead of using upload.html via browser)
-    if (upload) {
-        POST("http://stat220.stat.auckland.ac.nz/cke/upload.php",
-             body=list(MAX_FILE_SIZE="40000", userfile=fileUpload(outfile)),
-             config=list(userpwd="cke:cke", httpauth=1L, verbose=TRUE))
-    }
+#     if (upload) {
+#         POST("http://stat220.stat.auckland.ac.nz/cke/upload.php",
+#              body=list(MAX_FILE_SIZE="40000", userfile=fileUpload(outfile)),
+#              config=list(userpwd="cke:cke", httpauth=1L, verbose=TRUE))
+#     }
 }

@@ -81,7 +81,15 @@ annotations <- function(infile = NULL, outfile = NULL) {
         txtMatch <- sapply(txt, match)
         # which(txtMatch != -1) selects the correct node, as it will not be -1
         # (being -1 indicates the pattern not matched in txt)
-        lineNumber <- getLineNumber(node[[which(txtMatch != -1)]])
+        
+        # txtMatch matches for multiple entries when annotations are made on
+        #  same word at different locations
+        if (length(txtMatch) > 1) {
+            lineNumber <- sapply(node[txtMatch != -1], getLineNumber)[i]
+        } else if (length(txtMatch) == 1) {
+            lineNumber <- sapply(node[txtMatch != -1], getLineNumber)
+        }
+        
         src <- readLines(outfile, warn = FALSE)
         src <- append(src, anno.tags, after = lineNumber - 1)
         writeLines(src, outfile)

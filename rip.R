@@ -7,18 +7,17 @@ rip <- function(infile = NULL, outfile = NULL) {
     
     src <- readLines(infile)
     
-    ########################## Remove style #########################
+    ############################## Remove style ###############################
     # We assume that ONLY knitr has written .knitr.inline within a <style>
     # ".knitr.inline {" string seems to be always after 
     # "<style type=\"text/css\">" string.
     # Using this property, the correct "<style..." string is removed.
-    inline <- grep("[.]knitr[.]inline [{]", src)
+    style.inline <- grep("[.]knitr[.]inline [{]", src)
     style.begin <- grep('<style type=\"text/css\">', src)
     style.end <- grep("</style>", src)
-    
-    if (any(style.begin == (inline-1))) {
+    if (any(style.begin == (style.inline-1))) {
         # We use [1] to guard against multiple matching style.begins
-        start <- style.begin[which(style.begin == (inline-1))[1]]
+        start <- style.begin[which(style.begin == (style.inline-1))[1]]
         end <- style.end[which(style.end > start)[1]]
         src <- src[-c(start:end)]
     }
@@ -37,16 +36,16 @@ rip <- function(infile = NULL, outfile = NULL) {
     lines <- mapply(seq, chunks.begin, chunks.end)
     src <- src[-unlist(lines)]
     
-    ###################### Remove inline codes ######################
+    ########################### Remove inline codes ###########################
     inline <- grep('<code class=\"knitr inline\">', src)
     src[inline] <- gsub('<code class=\"knitr inline"(.+?)</code>', 
                         "", src[inline])
     
-    ###################### Replace all "keep"s ######################
+    ########################### Replace all "keep"s ###########################
     src <- gsub("<!--begin.keepcode", "<!--begin.rcode", src)
     src <- gsub("<!--keep.rinline", "<!--rinline", src)
     
-    ################### Remove extra spaces added ###################
+    ####################### Remove extra spaces added #########################
     # An empty space seems to be added before each R chunk
     extra <- grep("<!--begin.rcode", src)-1
     src <- src[-extra]
@@ -56,32 +55,30 @@ rip <- function(infile = NULL, outfile = NULL) {
     #  from that line up to the end line of edit.js (which should be
     #  the starting line + length(edit.js) - 1 to take duplicated
     #  first lines into account).
-    editJs.start <- grep("<!-- loading jQuery, CKEditor, and annotator.js -->", src)
+    editJs.start <- grep("<!-- loading jQuery, CKEditor, and annotator.js -->",
+                         src)
     editJs.end <- editJs.start + length(readLines("edit.js")) - 1
     src <- src[-c(editJs.start:editJs.end)]
     
-    ####################### Remove the buttons ######################
+    ########################### Remove the buttons ############################
     # Similarly, search for the starting line of "button.html", then
     #  remove from that line up to the end line
     button.start <- grep("<p id=\"savebutton\" style=\"background-", src)
     button.end <- button.start +  length(readLines("button.html")) - 1
     src <- src[-c(button.start:button.end)]
     
-    ################ Remove 'contenteditable="true"' ################
-    # Only for unchanged chunks so that "diff" doesn't detect it as
-    #  a change.
-    editor <- readLines("test-changes.txt")
-    editor.chunks <- grep("^editor editor[0-9].+", editor)
-    not.mod <- grep("NOT MODIFIED", editor[editor.chunks])
-    
-    srcEditLines <- grep('^.*<p.*contenteditable="true">', src)
-    srcEditLines <- srcEditLines[not.mod]
+    ##################### Remove 'contenteditable="true"' #####################
+    srcEditLines <- grep('contenteditable="true"', src)
     # We know that one empty space is in front of 'contenteditable="true"'
     #  from the way snap() adds it.
-    src[srcEditLines] <- gsub('(^\\s*<p.*)\\scontenteditable="true"',
+    src[srcEditLines] <- gsub('(^.*?<.*)\\scontenteditable="true"',
+                              "\\1", src[srcEditLines])
+    ########################## Remove 'id="Editor-' ###########################
+    srcEditLines <- grep('id=\"Editor-', src)
+    src[srcEditLines] <- gsub('(^.*?<.*)\\sid=\"Editor.+\"',
                               "\\1", src[srcEditLines])
     
-    ####################### Write return.Rhtml ######################
+    ########################### Write return.Rhtml ############################
     if (is.null(outfile)) {
         outfile <- gsub("save.html","return.Rhtml", infile)
     }
