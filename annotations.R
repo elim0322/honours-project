@@ -79,16 +79,13 @@ annotations <- function(infile = NULL, outfile = NULL) {
         }
         # Which txt has the matching pattern.
         txtMatch <- sapply(txt, match)
-        # which(txtMatch != -1) selects the correct node, as it will not be -1
-        # (being -1 indicates the pattern not matched in txt)
-        
         # txtMatch matches for multiple entries when annotations are made on
         #  same word at different locations
-        if (length(txtMatch) > 1) {
-            lineNumber <- sapply(node[txtMatch != -1], getLineNumber)[i]
-        } else if (length(txtMatch) == 1) {
-            lineNumber <- sapply(node[txtMatch != -1], getLineNumber)
-        }
+        # Change -1 matches to Inf
+        txtMatch[txtMatch < 0] <- Inf
+        whichMatch <- which.min(txtMatch)
+        
+        lineNumber <- sapply(node[whichMatch], getLineNumber)
         
         src <- readLines(outfile, warn = FALSE)
         src <- append(src, anno.tags, after = lineNumber - 1)
