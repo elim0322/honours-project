@@ -83,6 +83,18 @@ annotations <- function(infile = NULL, outfile = NULL) {
         #  same word at different locations
         # Change -1 matches to Inf
         txtMatch[txtMatch < 0] <- Inf
+        
+        # Sometimes where$startOffset values can be exactly the same, resulting
+        #  in duplicated entries in txtMatch (e.g. the text "term" or "next" in 
+        #  "Attempt.edit.html")
+        # If there is any "duplication" (not due to Inf), insert a warning sign.
+        if (any(duplicated(txtMatch[txtMatch != Inf]))) {
+            anno.tags <- append(anno.tags,
+                                '<br><font color="brown"> Warning: annotated
+                                text may not be the correct one. There may be
+                                duplicates.</font>',
+                                after = length(anno.tags)-1)
+        }
         whichMatch <- which.min(txtMatch)
         
         lineNumber <- sapply(node[whichMatch], getLineNumber)

@@ -44,6 +44,8 @@ changes <- function(infile = NULL, outfile = NULL) {
     #  just select "<tag" without the empty space). This will produce "<tag ".
     src.start <- grep('contenteditable=\"true\"', src)
     endTags <- gsub("(^.*<)(.+?)\\s.+$", "\\1/\\2>", src[src.start])
+    # Get rid of any white spaces before and in front of the end tags.
+    endTags <- gsub("\\s*", "", endTags)
 
     ##### Generate src.end
     html <- htmlParse(infile)
