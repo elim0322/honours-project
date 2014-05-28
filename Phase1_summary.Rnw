@@ -1,23 +1,28 @@
-\documentclass[a4paper]{article} 
-    %\parindent=2em
-    \parskip=1ex
-    \usepackage{fancyvrb}    % frames around verbatim %
-    \usepackage{listings}
+\documentclass[a4paper]{article}
+    \parindent=1em
+    \usepackage[font=footnotesize, labelfont=bf]{caption} % bold caption
+    %\usepackage[usenames,dvipsnames]{color} % not compatible with knitr yet..
+    \usepackage{listings} % fancyvrb doesn't have word wrap..
         \lstset{
             basicstyle=\small\ttfamily,
             columns=flexible,
-            breaklines=true
+            breaklines=true,
+            captionpos=t, % sets the caption-position to bottom
+            numbers=left, % line numbers on the left
+            frame=single, % adds a frame around the code
+            fontadjust=true
+            escapechar=|
+            language=HTML
         }
     \usepackage{url}
-    \usepackage{hyperref}
     \usepackage{tikz}
     \usetikzlibrary{shapes.geometric, arrows}
+
 
 %%%%% flow chart configuration %%%%%
 \tikzstyle{simple} = [rectangle, rounded corners, text width=3cm, text centered, draw=black, align=center]
 \tikzstyle{startstop} = [rectangle, rounded corners, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=red!30]
-\tikzstyle{process1} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, text width=3cm, draw=black, fill=orange!30]
-\tikzstyle{process2} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, text width=3cm, draw=black, fill=blue!30]
+\tikzstyle{process} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, text width=3cm, draw=black, fill=orange!20]
 \tikzstyle{decision} = [diamond, minimum width=2cm, minimum height=1cm, text centered, draw=black, fill=green!30]
 \tikzstyle{arrow} = [thick,->,>=stealth]
 \tikzstyle{line} = [thick,-,>=stealth]
@@ -32,72 +37,132 @@
 %%%%%%%%%% Introduction
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
-The \textbf{knitr} package is a wonderful R package that enables interaction between various different types of documents and R. It allows us to embed R code as well as the results from R code into the different document types of one's choice. Through diverse settings, one can tailor the way R code is displayed in final documents according to specific needs, leading to a pleasantly structured, satisfactory document.
+<<setup, echo=FALSE>>=
+opts_chunk$set(comment = NA, prompt = TRUE, tidy = FALSE, background='white')
+options(prompt = "R> ")
+@
 
-\begin{figure}[h!]
+\textbf{knitr} is a wonderful package that enables dynamic report generation with R. It allows us to implement R code into LaTeX, LyX, HTML, Markdown, AsciiDoc, and reStructuredText documents through the concepts of literate programming, which involves interaction between code and documentation for report generation. The main purpose of \textbf{knitr} follows an important idea in academic research that the ideal report should include the computational environment used for the research such as code and data which can reproduce results (reproducible research).
+
+\begin{figure}[h]
 \centering
   \begin{tikzpicture}[node distance=3cm]
     \node(in)[simple]{Source document \\ (input)};
-    \node(out)[simple, right of=in, xshift=2cm]{Final document \\ (output)};
+    \node(out)[simple, right of=in, xshift=2.5cm]{Final document \\ (output)};
     \draw[arrow](in)--node[anchor=south]{\textbf{knitr}}(out);
-    \end{tikzpicture}
-  \caption{Basic idea}  \label{fig:flow1}
+  \end{tikzpicture}
+  \caption{Unidirectional process of generating final documents}
+  \label{fig:flow1}
 \end{figure}
 
-However, using this package is almost always a one-way trip (Figure \ref*{fig:flow1}), meaning source documents, containing R code to be displayed, generate final documents as output, not the other way around. In situations where a person who provides documents (using \textbf{knitr}) and another who reads or reviews the documents are involved, it is often difficult for the document provider to receive feedback from the reviewer and make appropriate changes. A good example of these situations would be when interaction between clients and consultatns is involved. Luckily, most R users are of professions that demand substantial amount of interaction with clients, such as statisticians.
+While there are tremendously important ideas to consider and many advantages, the process of generating R code embedded documents using \textbf{knitr} is almost always a one-way trip (Figure \ref{fig:flow1}), meaning source documents (as input) can only generate final documents (as output), not the other way around. This is simply due to the fact that \textbf{knitr} is designed with intention to dynamically generate reports, not to extract displayed R code in final documents to generate source documents. There may be a few limitations, caused by this property, that we will explore further.
 
-Since it is impossible to go back from final documents to source documents (i.e. final documents cannot be used to generate source documents), the reviewer would have to provide his or her feedback by either writing physically on the printed version of the final documents or electronically. The document provider, then, has to retify the source documents accordingly, and repeat the process of generating and presenting final documents to the reviewer. There is high possibility that this process can be of multiple times and can become tedious, not to mention the task of editing itself, especially when the final documents are generated from several source documents.
+Consider a situation where a person who provides documents (using \textbf{knitr}) and another who reads or reviews the documents are involved. In this situation, it is often difficult for the document provider to receive feedback from the reviewer efficiently and make appropriate changes. Since it is impossible to go back from final documents to source documents, the reviewer would have to provide his or her feedback by either writing physically on the printed version of the final report or by electronic means such as through e-mails. The document provider, then, has to rectify the source documents accordingly, and repeat the process of generating and presenting the report to the reviewer. This process often has to be repeated until final correction can be achieved. As we can see, it can quickly become tedious.
 
-Therefore, we want to be able to edit output documents directly as it is often the easier process. A possible solution is to allow reviewers (of the final documents) to interact directly with the final documents and be able to edit them. Then the document provider can revise and refine the edited documents as a final step. Time and resources, wasted otherwise, will be reduced significantly. To achieve the aforementioned solution, there must be a way to enable final documents to be converted to source documents. In other words, the one-way trip from source documents to final documents must incoporate another trip from the final to source documents.
+We believe this is relevant to the field of statistics as similar situations mentioned above can often arise. Interaction between clients and consultants is fundamentally important for statisticians and any possible factor to deteriorate the relationship with clients is best avoided. Therefore, we want to avoid this issue by a more efficient way to generate final documents.
 
-Hence, the project we are working on has its main focus on making this ideal round trip possible, and if not what possible issues prevent this from happening. For a start, we deal with simple HTML documents in the hopes of finding a generalised approach for our goal.
+A possible solution is to allow reviewers to interact directly with the final documents to edit them. Then the document provider can see the changes made by the reviewer and discuss those changes more efficiently. Furthermore, to take reproducible research into account it would be best to find a way to generate a new source document based on the edited final document (so the newly edited final reports can be reproducible). To achieve this solution, there must be a way to enable final documents to be converted to source documents. In other words, the one-way trip from source documents to final documents must incoporate another trip from the final to source documents.
 
+Hence, the project we are working on has its main focus on making this ideal round trip possible, and if not what possible issues prevent this from happening. For a start, we deal with simple HTML documents in the hopes of finding a more generalised approach for our goal.
+
+Before proceeding further into more detailed look at the round trip, here is a brief illustration of how an HTML source document in the Rhtml format can produce the final HTML document.
+
+Below is the structure of the source document, ``example1.Rhtml". We can notice from the lines 9-11 that a line of R code (line 10) is enclosed in a special comment tag.
+
+\definecolor{GreenYellow}{HTML}{FAA21A}
+\newcommand{\hl}{\makebox[0pt][l]{\color{GreenYellow}\rule[-0.2em]{\linewidth}{1em}}}
+\begin{lstlisting}[caption={example1.Rhtml}, escapechar=\|, label={lst:lst1}]
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Example</title>
+  </head>
+  <body>
+    <h1>Example</h1>
+    <p>20 random variates from the standard normal distribution</p>
+|\hl|    <!--begin.rcode
+|\hl|    rnorm(20)
+|\hl|    end.rcode-->
+    </body>
+</html>
+\end{lstlisting}
+
+The following code calls the function, \texttt{knit()}, on the above Rhtml document, and the document is ``knitted" to generate the final document, ``example1.html".
+\begin{lstlisting}[language=R]
+R> library(knitr)
+R> knit("example1.Rhtml")
+\end{lstlisting}
+
+Below is the structure of the final document, "example1.html". The R code chunk has been modified (lines 14-20) to match the HTML syntax and be processed as a part of the HTML document. The original line of R code (from line 10 of Listing ref{lst:lst1}) is still noticeable (red coloured text in Listing \ref{lst:lst2}). The output from the R code is in lines 16-18 in Listing \ref{lst:lst2}.
+\begin{lstlisting}[caption={example1.html}, escapechar=\|, label={lst:lst2}]
+<!DOCTYPE html>
+<html>
+  <head>
+<style type="text/css">
+.knitr.inline {
+    ...about 58 lines of styles defined by knitr...
+}
+</style>
+    <title>Example</title>
+  </head>
+  <body>
+    <h1>Example</h1>
+    <p>20 random variates from the standard normal distribution</p>
+<div class="chunk" id="unnamed-chunk-1"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">|{\color{red}rnorm}|</span><span class="hl std">|{\color{red}(}|</span><span class="hl num">|{\color{red}20}|</span><span class="hl std">|{\color{red})}|</span>
+</pre></div>
+<div class="output"><pre class="knitr r">##  [1] -0.326450  0.868096  0.109990  0.555811  0.961545  0.200446  0.352004
+##  [8] -0.009584 -0.132941  1.233210  0.656319  1.166483  0.238306  2.137970
+## [15]  1.268752 -0.808173  0.207059 -0.734526  0.820859  1.248322
+</pre></div>
+</div></div>
+
+  </body>
+</html>
+\end{lstlisting}
+
+Here is how ``example1.html" will look like in a browser.
+\begin{figure}[b]
+\centering
+\includegraphics[scale=0.5]{example1}
+\caption{example1.html in a browser}
+\end{figure}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%% Overview
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\pagebreak
 \section{Overview}
-
-\begin{figure}[ht!]
-\centering
+\begin{figure}[h!]
   \begin{tikzpicture}[node distance=2cm]
     \node(start)[startstop]{untitled.Rhtml};
-    \node(sew)[process1, below of=start]{untitled.post.Rhtml};
-    \node(knit)[process1, below of=sew]{untitled.post.html};
-    \node(snap)[process2, right of=knit, xshift=3cm]{untitled.edit.html};
-    \node(anno)[process2, below of=snap]{untitled.anns.html};
-    \node(chgs)[process2, below of=anno]{untitled.save.html};
-    \node(rip)[startstop, left of=chgs, xshift=-3cm]{untitled.return.Rhtml};
+    \node(sew)[process, below of=start]{untitled.post.Rhtml};
+    \node(knit)[process, below of=sew]{untitled.post.html};
+    \node(snap)[process, below of=knit]{untitled.edit.html};
+    \node(anno)[process, below of=snap]{untitled.anns.html};
+    \node(chgs)[process, below of=anno]{untitled.save.html};
+    \node(rip)[startstop, below of=chgs]{untitled.return.Rhtml};
     \node(repeat)[decision, left of=knit, xshift=-3cm]{Repeat};
     \draw[arrow](start)--node[anchor=west] {\texttt{sew()}} (sew);
     \draw[arrow](sew)--node[anchor=west] {\texttt{knit()}} (knit);
-    \draw[arrow](knit)--node[anchor=south] {\texttt{snap()}} (snap);
+    \draw[arrow](knit)--node[anchor=west] {\texttt{snap()}} (snap);
     \draw[arrow](snap)--node[anchor=west] {\texttt{annotations()}} (anno);
     \draw[arrow](anno)--node[anchor=west]{\texttt{changes()}} (chgs);
-    \draw[arrow](chgs)--node[anchor=south] {\texttt{rip()}} (rip);
+    \draw[arrow](chgs)--node[anchor=west] {\texttt{rip()}} (rip);
     \draw[line, dashed](rip)-|(repeat);
     \draw[arrow, dashed](repeat)|-(start);
   \end{tikzpicture}
-\caption{Hypothetical round trip}  \label{flow:2}
+\caption{Steps involved in the round trip. The source document (\texttt{untitled.Rhtml}) goes through each step until it reaches the final destination (\texttt{untitled.post.Rhtml}) which contains changes and comments. The final \texttt{post.Rhtml} file can be fed through the process again if additional changes are required.}
+\label{flow:2}
 \end{figure}
 
-For different types of source documents, \textbf{knitr} requires users to wrap chunks of R code inside comments whose syntax corresponds to the type of source documents.
+As we have seen in Listing \ref{lst:lst1}, \textbf{knitr} requires users to wrap chunks of R code inside comments whose syntax corresponds to the source document type. This allows the R code chunks to be recognised as a part of the final document and be displayed appropriately.
+
+To further emphasise this rule, below displays how R code should be wrapped for HTML documentation. We can notice that the lines 9-11 from Listing \ref{lst:lst1} obeys this rule (\texttt{<!--beging.rcode ...R code... end.rcode-->}).
 <<>>=
 library(knitr)
 all_patterns$html
 @
 
-To illustrate how \textbf{knitr} works, a simple example of an HTML document can be considered. For different types of documents
 
-\begin{Verbatim}[frame=single]
-<html>
-<body>
-    <p>Here is a series from 1 to 10.</p>
-    <!--begin.rcode
-    1:100
-    end.rcode-->
-</body>
-</html>
-\end{Verbatim}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Functions}
@@ -112,7 +177,7 @@ We have decided to use an algorithm in \texttt{sew()} that when a source documen
 When \texttt{sew()} is called on an Rhtml document (HTML source document), a new document with a ``post.Rhtml" extention is created inside the user's current working directory (by default). In the new document, copies of the original R code chunks are generated and inserted after their corresponding originals. These copies are commented out with a keyword ``keep" as a marker, which is consistently used in later steps of the round trip. Then, \texttt{knit()} treats them as ordinary comments and they are excluded from display. Although these ``copies" are hidden from the display of output documents, one can easily gain access to them via text editors. Hence, it becomes possible that successive output documents retain the contents of the original R codes, even if the codes are altered for display.
 
 A brief example may be considered to demonstrate \texttt{sew()}...
-\begin{Verbatim}[frame=single]
+\begin{verbatim}
 <!DOCTYPE html>
 <html>
   <head>
@@ -126,7 +191,7 @@ A brief example may be considered to demonstrate \texttt{sew()}...
     end.rcode-->
   </body>
 </html>
-\end{Verbatim}
+\end{verbatim}
 
 The following code calls \texttt{sew()} on the above Rhtml document...
 \begin{verbatim}
@@ -135,7 +200,7 @@ The following code calls \texttt{sew()} on the above Rhtml document...
 \end{verbatim}
 
 ... and we observe the copied R code in the resulting post.Rhtml document...
-\begin{Verbatim}[frame=single]
+\begin{verbatim}[frame=single]
 <!DOCTYPE html>
 <html>
   <head>
@@ -152,7 +217,7 @@ The following code calls \texttt{sew()} on the above Rhtml document...
     end.rcode-->
   </body>
 </html>
-\end{Verbatim}
+\end{verbatim}
 
 This post.Rhtml document is, then, knitted using the following...
 \begin{verbatim}
