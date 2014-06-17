@@ -2,7 +2,7 @@ library(XML)
 library(httr)
 library(RCurl)
 
-snap <- function(infile = NULL, outfile = NULL, upload = TRUE) {
+snap <- function(infile = NULL, outfile = NULL) {
     if (is.null(infile)) {
         infile <- load.dir()
     }
