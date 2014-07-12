@@ -42,8 +42,10 @@ sew <- function(infile = NULL, outfile = NULL) {
     keep.list <- vector("list", length(R.begin))
     for(i in 1:length(R.begin)) {
         keep.list[[i]] <- src[R.begin[i]:R.end[i]]
-        newFirstLine <- gsub("[.]r", ".keep", keep.list[[i]][1])
-        keep.list[[i]][1] <- newFirstLine
+        last <- length(keep.list[[i]])
+        # Change the first AND last lines.
+        newLines <- gsub("[.]r", ".keep", keep.list[[i]][c(1,last)])
+        keep.list[[i]][c(1,last)] <- newLines
     }
     
     ############################ write post.Rhtml #############################
