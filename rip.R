@@ -43,7 +43,7 @@ rip <- function(infile = NULL, outfile = NULL) {
     
     ########################### Replace all "keep"s ###########################
     
-    src <- gsub("(<!--.+[.])(keep)(code.*$)", "\\1r\\3", src)    
+    src <- gsub("(.+[.])(keep)(code.*$)", "\\1r\\3", src)
     src <- gsub("<!--keep.rinline", "<!--rinline", src)
     
     ####################### Remove extra spaces added #########################

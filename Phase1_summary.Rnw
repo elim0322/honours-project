@@ -36,9 +36,9 @@
 
 \begin{document}
   \maketitle
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%% Introduction
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%------------------------------------------------------------------------------
+% Introduction
+%------------------------------------------------------------------------------
 \section{Introduction}
 \label{sec:introduction}
 <<setup, echo=FALSE>>=
@@ -70,13 +70,13 @@ A possible solution is to allow reviewers to interact directly with the final do
 
 The project we are working on has its main focus on making this ideal round trip possible, and if not what possible issues prevent this from happening. For a start, we deal with simple HTML documents in the hopes of finding a more generalised approach for our goal.
 
-Before proceeding further into more detailed look at the round trip, here is a brief illustration of how an HTML source document in the Rhtml format can produce the final HTML document.
+Before proceeding further into more detailed look at the round trip, here is a brief illustration of how an HTML source document in the \texttt{.Rhtml} format can produce the final HTML document.
 
-Below is the code structure of the source document, ``example1.Rhtml". We can notice from the lines 9--11 that a line of R code (line 10) is enclosed in a special comment tag.
+Below is the code structure of the source document, \texttt{example1.Rhtml}. We can notice from the lines 9--11 that a line of R code (line 10) is enclosed in a special comment tag.
 
 \definecolor{c}{HTML}{CCFF00}
 \newcommand{\hl}[3][black]{{\fboxsep0.5pt\colorbox{#2}{\color{#1} #3}}}
-\begin{lstlisting}[caption={example1.Rhtml}, escapechar=\|, label={lst:1}]
+\begin{lstlisting}[caption={\texttt{example1.Rhtml}}, escapechar=\|, label={lst:1}]
 <!DOCTYPE html>
 <html>
   <head>
@@ -92,20 +92,21 @@ Below is the code structure of the source document, ``example1.Rhtml". We can no
 </html>
 \end{lstlisting}
 
-The following code calls the function, \texttt{knit()}, on the above Rhtml document, and the document is ``knitted" to generate the final document, ``example1.html".
+The following code calls the function, \texttt{knit()}, on the above \texttt{.Rhtml} document, and the document is ``knitted" to generate the final document, \texttt{example1.html}.
 <<eval=FALSE>>=
 library(knitr)
 knit("example1.Rhtml")
 @
 
-Listing \ref{lst:2} shows the structure of the final document, "example1.html". The R code chunk has been modified (lines 14--20) to match the HTML syntax and be processed as a part of the HTML document. The original line of R code (from line 10 of Listing \ref{lst:1}) is still noticeable (red coloured text in Listing \ref{lst:2}). The output from the R code is in lines 16--18 in Listing \ref{lst:2}.
-\begin{lstlisting}[caption={example1.html}, escapechar=\|, label={lst:2}]
+Listing \ref{lst:2} shows the structure of the final document, \texttt{example1.html}. The R code chunk has been modified (lines 14--20) to match the HTML syntax and be processed as a part of the HTML document. The original line of R code (from line 10 of Listing \ref{lst:1}) is still noticeable (highlighted text in Listing \ref{lst:2}). The output from the R code is in lines 16--18 in Listing \ref{lst:2}.
+
+\begin{lstlisting}[caption={\texttt{example1.html}}, escapechar=\|, label={lst:2}]
 <!DOCTYPE html>
 <html>
   <head>
 <style type="text/css">
 .knitr.inline {
-    ...about 58 lines of styles defined by knitr...
+    |\emph{...about 58 lines of styles defined by knitr...}|
 }
 </style>
     <title>Example</title>
@@ -125,28 +126,32 @@ Listing \ref{lst:2} shows the structure of the final document, "example1.html". 
 </html>
 \end{lstlisting}
 
-Figure \ref{fig:2} shows what ``example1.html" will look like in a browser.
+Figure \ref{fig:2} shows what \texttt{example1.html} will look like in a browser.
 \begin{figure}[h]
-\includegraphics[trim=0cm 20cm 0cm 0cm,clip=true,width=1.3\textwidth,center]{example1}
-\caption{example1.html in a browser}
-\label{fig:1}
+\includegraphics[trim=0cm 23cm 0cm 0cm,clip=true,width=1.1\textwidth,center]{example1}
+\caption{\texttt{example1.html} in a browser}
+\label{fig:2}
 \end{figure}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%% Overview
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%------------------------------------------------------------------------------
+% Overview
+%------------------------------------------------------------------------------
 \pagebreak
 \section{Overview}
 \label{sec:overview}
+
+There are six main steps in a complete cycle of the round trip. Each step generally involves modification of the document to prepare it for a specific goal. Ultimately, our ideology is that the reviewer edits directly on the \texttt{.edit.html} document prepared by the document provider and saves the changes. Then the document provider can re-generate the source document with appropriate changes which can be knitted again to produce another \texttt{.edit.html} document for extra editing. The round trip can be a repeated process to allow for additional editing if required.
+
 \begin{figure}[h!]
   \begin{tikzpicture}[node distance=2.2cm]
-    \node(start)[startstop]{untitled.Rhtml};
-    \node(sew)[process, below of=start]{untitled.post.Rhtml};
-    \node(knit)[process, below of=sew]{untitled.post.html};
-    \node(snap)[process, below of=knit]{untitled.edit.html};
+    \node(start)[startstop]{\texttt{.Rhtml}};
+    \node(sew)[process, below of=start]{\texttt{.post.Rhtml}};
+    \node(knit)[process, below of=sew]{\texttt{.post.html}};
+    \node(snap)[process, below of=knit]{\texttt{.edit.html}};
     \node(browser)[simple, right of=snap, xshift=2cm]{browser:\\upload, edit, save};
-    \node(anno)[process, below of=snap]{untitled.anns.html};
-    \node(chgs)[process, below of=anno]{untitled.save.html};
-    \node(rip)[startstop, below of=chgs]{untitled.return.Rhtml};
+    \node(anno)[process, below of=snap]{\texttt{.anns.html}};
+    \node(chgs)[process, below of=anno]{\texttt{.save.html}};
+    \node(rip)[startstop, below of=chgs]{\texttt{.return.Rhtml}};
     \node(repeat)[decision, left of=knit, xshift=-3cm]{Repeat};
     \draw[arrow](start)--node[anchor=west] {i.\texttt{sew()}} (sew);
     \draw[arrow](sew)--node[anchor=west] {ii.\texttt{knit()}} (knit);
@@ -162,60 +167,80 @@ Figure \ref{fig:2} shows what ``example1.html" will look like in a browser.
     \draw[line, dashed](rip)-|(repeat);
     \draw[arrow, dashed](repeat)|-(start);
   \end{tikzpicture}
-\caption{Steps involved in the round trip. The source document (``untitled.Rhtml") goes through each step until it reaches the final destination (``untitled.return.Rhtml"). The final return.Rhtml file can be fed through the process again if additional changes are required.}
+\caption{Steps involved in the round trip. The source document (\texttt{.Rhtml}) goes through each step until it reaches the final destination (\texttt{.return.Rhtml}). The final \texttt{.return.Rhtml} file can be fed through the process again if additional changes are required.}
 \label{fig:3}
 \end{figure}
 
+\pagebreak
 The flow chart in Figure \ref{fig:3} outlines a series of steps involved in our hypothesised round trip. A brief description for each step is as follows:
 \begin{enumerate}[i]
-\item The function \texttt{sew()} is called on the Rhtml (source) document to generate a post.Rhtml file. As we have seen in Listing \ref{lst:2}, the original R code is heavily modified by \textbf{knitr} as the final document is generated. We must preserve the original R code so that it can be ``reproduced" or reappear in the new source document generated from the round trip.
+\item The function \texttt{sew()} is called on the source document (\texttt{.Rhtml}) to generate a \texttt{.post.Rhtml} file.
 
-In order to preserve the original R code chunks, each chunk is copied and inserted next to the original with a marker. This marker will be explained more in detail but their primary purpose is to allow separate detection of the original and copy. After all the chunks of R code present in the source document are copied and correctly inserted, the post.Rhtml document is prepared for the next step.
+Each R code chunk in the source document is copied with a slight change to preserve each of the original R code chunks. The goal is to compensate for the fact that the original R code is heavily modified by \textbf{knitr} as the final document is generated (refer back to Listing \ref{lst:2} as a reminder). We must preserve the original R code so that it can be ``reproduced" or reappear in the new source document generated from the round trip.
 
-\item The post.Rhtml document is knitted to produce a post.html document which retains the copies of the original R code chunks. Note that these copies are not displayed as they are hidden inside HTML comment tags while the information of the original R code is retained in the successive steps. The copies will not be interfered until the very last step of the round trip.
+%------------------
+\item The \texttt{.post.Rhtml} document is knitted to produce a \texttt{.post.html} document which retains the copies of the original R code chunks.
 
-\item Through the function \texttt{snap()} a few lines of code are appended in the knitted document ``untitled.post.html" to enable the features of text editing. All parts of the document can be edited through a browser-integrated text editor called \textbf{CKEditor} once the resulting document ``untitled.edit.html" is uploaded on our server. The R related sections of the document such as the displayed R code and any output from R are controlled to be annotated only through an engine called \textbf{AnnotateIt}. Any changes and annotations made on the document can be saved into text files (via a method involving PHP) which serve as primary input for the next step.
+Note that these copies are not displayed as they are hidden inside HTML comment tags while the information of the original R code is retained in the subsequent steps. The copies will not be interfered until the very last step of the round trip.
 
-\item Any annotations made during the previous editing step are processed and inserted at the top lines of the corresponding R code chunks with the information on \emph{which} text is annotated with \emph{what} annotations by \emph{who}. The inserted annotations are highlighted to further improve visual awareness. Once all the annotations are processed, an anns.html file is created for the next step.
+%------------------
+\item The function \texttt{snap()} is called on the \texttt{.post.html} document to produce a \texttt{.edit.html} document.
 
-\item Similarly to the previous annotations step, any changes made on ``untitled.edit.html" are read in and the old, unwanted lines of text are replaced accordingly with the new lines of text. Then, the resulting document is saved as a save.html file for the final step.
+The main task carried out by \texttt{snap()} is to append a few supplementary lines of code in the \texttt{.post.html} document to enable the features of text editing and annotating. The sections of the document relating to R such as R code chunks and any output from R are restricted for annotations only while the rest of the document is entirely editable with a few possible exceptions (the reason behind this decision will be discussed in more detail later).
 
-\item \texttt{rip()} is the function involved in the ``final" step of the round trip. As the name ``rip" suggests, any additional lines of code inserted during the round trip are removed, essentially to match the format of the source document. Moreover, the lines added by \textbf{knitr} itself (such as code for its pre-defined style) are also removed. The copies of R code (from \texttt{sew()}) are text-processed to be wrapped inside the appropriate comment tags (lines 9 and 11 in Listing \ref{lst:1}) required by \textbf{knitr}.
+Once the output document (\texttt{.edit.html}) is generated (by \texttt{snap()}), it needs to be uploaded onto a server through which editing, annotating and saving the changes made are fully functional. The changes are saved as text files.
+
+%------------------
+\item The saved text file (from the previous step) contains information on any annotations made. The function \texttt{annotations()} can access this information to make appropriate changes on the \texttt{.edit.html} document to produce a \texttt{.anns.html} document.
+
+In the output document (\texttt{.anns.html}), a message is inserted at the top of each annotated R code chunk to display \emph{which} text is annotated with \emph{what} annotations by \emph{who}.
+
+%------------------
+\item Similarly to the previous annotations step, any changes made on the \texttt{.edit.html} document are accessed through the saved text file.
+
+The old, unwanted lines of text from the input document \texttt{.anns.html} are replaced with the corresponding new lines of text to generate a \texttt{.save.html} document.
+
+%------------------
+\item The function \texttt{rip()} is called on the \texttt{.save.html} document to produce a \texttt{.return.Rhtml} document.
+
+The main goal of \texttt{rip()} is to ``reproduce" a new source document with the changes and annotations made the previous steps. It essentially aims to convert the \texttt{.save.html} document to match the format of the source document (\texttt{.Rhtml}). Any additional lines of code inserted during the round trip and the lines added by \textbf{knitr} (such as the lines of code for the style defined by \textbf{knitr}) are removed as the main algorithm for the reproducibility.
 
 \end{enumerate}
 
-The final document can be repeatedly fed through the steps of the round trip for additional editing. The overall execution of all the steps involved in the round trip may seem unnecessary but it can definitely improve the efficient communication between the previously mentioned document provider and reviewer.
+Important assumptions and more detailed discussion of these functions involved in the round trip will be introduced in Section \ref{sec:functions}.
 
-Ideally the reviewer edits directly on the post.html document prepared by the document provider and saves the changes. Then the document provider can re-generate the source document with appropriate changes which can be knitted again to produce another post.html document for extra editing.
-
-Much detail is omitted for the purpose of the overview. Important assumptions and more detailed discussion of these functions involved in the round trip will be introduced in section \ref{sec:functions}.
-
-
+%------------------------------------------------------------------------------
+% Functions
+%------------------------------------------------------------------------------
 \section{Functions}
 \label{sec:functions}
-Throughout the project, many important assumptions have emerged from time to time which have played an important role in improving the robustness of our methodology on the completion of the round trip. These assumptions should be regarded as 
-Therefore, it is absolutely necessary to mention them along with more detailed discussion on the reasoning behind the logic of our functions.
+There have been various ideas to support the logic behind the algorithms involved in the steps of the round trip. It is absolutely vital to explore deeper into each function for us to gain better understanding. The main purpose of this section is to simply discuss the role of each function in more detail in order to obtain adequate understanding of the overall project and hopefully answer any questions and uncertainties raised in the previous section.
 
 \subsection{\texttt{sew()}}
 \label{subsec:1}
-As a reminder we can refer back to Listing \ref{lst:1} and note the way R code is presented. As we examine the highlighted lines (9 and 11 especially), we should notice that \textbf{knitr} requires R code chunks to be wrapped inside obscurely modified HTML comment tags (lines 9 and 11) which can only be recognised and processed by \textbf{knitr}. Upon realising this method used by \textbf{knitr}, our immediate response was to use a similar algorithm to approach the hypothesized round trip.
+One of the most important ideas to constantly remind ourselves was the preservation of the original R code. As briefly mentioned in Section \ref{sec:overview}, retaining the exactly identical R code (that we started with) is a fundamentally important aspect of the round trip in order to reproduce the identical source document. We have figured that the task of preserving the original R code would be much more difficult once the code is converted by the function \texttt{knit()}, as it would then require an extra step of text-processing on the converted R code. Gathering the original information from the converted format is unnecessary complication that we can avoid, which led us to a conclusion that the preservation should happen prior to the conversion step of \texttt{knit()}.
 
-One of the most important ideas to constantly remind ourselves was the preservation of the original R code. As briefly mentioned in section \ref{sec:overview}, retaining the exactly identical R code (that we started with) is a fundamentally important aspect of the round trip to reproduce the identical source document. If we were to edit final documents directly, the sections of any R related contents cannot be directly modified due to the unidirectional property of \textbf{knitr} (as we have explored in section \ref{sec:introduction}) and therefore can only be annotated, it is essential that the round trip implements a methodology for the retention of the original R code. 
+A possible solution is to formulate a similar strategy that the package \textbf{knitr} uses. As a reminder we can refer back to Listing \ref{lst:1} and note the way R code is presented. The original line of R code is wrapped inside slightly modified HTML comment tags (lines 9 and 11) which act as a marker to signal that the contents in these comments are intended to be displayed in the final document. In other words, the function \texttt{knit()} recognises these specific types of HTML comments and convert their contents (lines of R code) appropriately for display. The package requires the user to enclose all R code chunks intended for display in final documents in this special manner.
 
-We have decided to implement a similar algorithm involving HTML comment tags through which the retention of the original R code is possible. The algorithm we have formulated is to (exactly) copy the original chunks of R code and insert the copies next to the originals. This is essentially carried out by \texttt{sew()}.
+We have decided to implement a similar algorithm involving HTML comment tags through which the retention of the original R code is possible. The only conceptual difference between the two algorithms is in their objectives: detection of R code chunks for conversion in \textbf{knitr} and for preservation in ours. The algorithm we have formulated is to copy the original chunks of R code and insert the copies below the originals. In addition, the HTML comment tags to contain the copies are further modified so that they are explicitly controllable in later steps while avoiding detection from \texttt{knit()}. These copies remain technically as comments in the HTML syntax which can only be examined through the internal code structure of the document (hidden from display through a browser). As a result, the copies of R code chunks (generated by \texttt{sew()}) are preserved in all steps unless we decide to control them to undergo modification.
 
-The following command in R calls \texttt{sew()} on ``example1.Rhml" to generate ``example1.post.Rhtml".
+In summary, our function \texttt{sew()}:
+\begin{itemize}
+ \item detects any R code chunks that obey the required syntax of \textbf{knitr}, that is the chunks intended to be displayed in final documents, \\[-3ex]
+  \item creates identical copies of those (original) R code chunks with altered the comment tags and \\[-3ex]
+  \item inserts the copies below the corresponding R code chunks.
+\end{itemize}
+
+The following command in R calls \texttt{sew()} on \texttt{example1.Rhml} to generate \texttt{example1.post.Rhtml}.
+
 <<eval=FALSE>>=
 source("sew.R")
 sew("example1.Rhtml")
 @
 
-The lines of text coloured green in Listing \ref{lst:3} represent the copy of the original R code chunk. Comparing with the structure of the initial source document (Listing \ref{lst:1}), the two documents are identical, except for the green-coloured section to suggest that only the copy of the original R code is inserted and no other sections are unintentionally changed by the function \texttt{sew()}.
+Listing \ref{lst:3} shows the structure of the output document \texttt{example1.post.Rhtml} from \texttt{sew()}. Note that the code structures of the input document \texttt{example1.Rhtml} (Listing \ref{lst:1}) and the output document \texttt{example1.post.Rhtml} (Listing \ref{lst:3}) are identical except the highlighted text which represents the copy of the original R code (lines 9--11).
 
-A slight deviation can be observed in line 12 (compared to the ``original" line 9) which is our intention so that the copies are easily identifiable. The algorithm is effective in the way that \textbf{knitr} does not detect our copies while we can control what to do with them in the subsequent steps. More specifically, the replacement of the character ``r" by the text ``keep" in line 12 separates this copy from the original R code chunk so that \textbf{knitr} is unable to recognize the pattern for conversion. This allows the copy to remain as comments in the HTML syntax which can only be examined through the internal code structure of the document (not displayed in a browser). Furthermore, this difference can be indentified without difficulty to allow for robust control over these copies.
-
-In consequence, the copies cannot be interfered by \textbf{knitr} (which is perfect for our goal of preserving the R code) and they are not displayed in the final document for reproducibility. Unless we specifically decide to remove the copies, they remain untouched throughout the round trip until the final stage involving the conversion of these copies into their corresponding originals.
-\begin{lstlisting}[caption={example1.post.Rhml}, escapechar=\|, label={lst:3}]
+\begin{lstlisting}[caption={\texttt{example1.post.Rhml}}, escapechar=\|, label={lst:3}]
 <!DOCTYPE html>
 <html>
   <head>
@@ -229,20 +254,27 @@ In consequence, the copies cannot be interfered by \textbf{knitr} (which is perf
     end.rcode-->
     |\hl{c}{<!--begin.keepcode}|
     |\hl{c}{rnorm(20)}|
-    |\hl{c}{end.rcode-->}|
+    |\hl{c}{end.keepcode-->}|
   </body>
 </html>
 \end{lstlisting}
+%------------------------------------------------------------------------------
+\subsubsection{\texttt{knit()}}
+\label{subsubsec:1}
 
-The resultant document ``example1.post.Rhtml" can be knitted to produce ``example1.post.html" whose internal structure can be seen in Listing \ref{lst:4}. The highlighted lines show that the copy of the original R code chunk remains untouched by the knitting procedure, and is hidden from the display via a browser (Figure \ref{fig:4}). Notice Figure \ref{fig:2} and \ref{fig:4} are identical (except the randomly generated values). The R code chunk in ``example1.post.html" can be observed from the lines 12--18. Notice that the R code chunk is divided into two nested div elements with the class attributes \texttt{"rcode"} and \texttt{"output"} respectively. Nonetheless the whole R code chunk is inside a div element with a class attribute named \texttt{"chunk"} which can be specifically identified to allow for robust control over this chunk.
+The output document \texttt{example1.post.Rhtml} from the function \texttt{sew()} is ready to undergo the knitting procedure in a sense that the resultant document \texttt{example1.post.html} (from \texttt{knit()}) will always retain the original R code.
 
-\begin{lstlisting}[caption={example1.post.Rhml}, escapechar=\|, label={lst:4}]
+The following code is executed in R to knit the input document \texttt{example1.post.Rhtml}...
+<<eval=FALSE>>=
+knit("example1.post.Rhtml")
+@
+...to generate the output document \texttt{example1.post.html} whose internal code structure can be examined in Listing \ref{lst:4}. Note that the highlighted lines represent that the copy of the original R code chunk which remains untouched by the knitting procedure.
+
+\begin{lstlisting}[caption={\texttt{example1.post.Rhml}}, escapechar=\|, label={lst:4}]
 <!DOCTYPE html>
 <html>
   <head>
-<style type="text/css">
-    ...lines inserted by knitr
-</style>
+    |\emph{...lines of style from knitr}|
     <title>Example</title>
   </head>
   <body>
@@ -263,43 +295,286 @@ The resultant document ``example1.post.Rhtml" can be knitted to produce ``exampl
 </html>
 \end{lstlisting}
 
+Figure \ref{fig:4} shows how the document \texttt{example1.post.html} looks like in a browser. We should notice that the copy of the origiinal R code is hidden from the display and the only differences in the browser-display are the random variates.
+
 \begin{figure}[h]
-\includegraphics[trim=0cm 20cm 0cm 0cm,clip=true,width=1.3\textwidth,center]{example1_post}
-\caption{example1.post.html in a browser}
+\includegraphics[trim=0cm 23cm 0cm 0cm,clip=true,width=1.1\textwidth,center]{example1_post}
+\caption{\texttt{example1.post.html} in a browser}
 \label{fig:4}
 \end{figure}
 
-The output HTML document from \texttt{sew()} (``example1.post.html) is available to be edited and annotated. As long as our intention remains not to interfere with the copies of R code chunks, these copies are safely reserved in the document. That is, the following step of enabling the document to be edited and annotated does not affect the copies in any way.
-
+%------------------------------------------------------------------------------
+\pagebreak
 \subsection{\texttt{snap()}}
 \label{subsec:2}
-Our primary goal is to edit directly on the HTML document that \texttt{knit()} produces. In general, HTML documents are most often viewed through a browser. The essential purpose of HTML documentation and coding itself lies in the presentation of information through a browser (as opposed to that of XML being the containment of information) which has led us to formulate an algorithm in conjunction with browsers. One of the most natural programming languages extensively used for browsers and browser-integrated applications can be considered JavaScript. From seraching through resources, an open source engine (coded in JavaScript) named \textbf{CKEditor} has been available to us for testing. \textbf{CKEditor} is a browser-integrated text editor that incorporates editable environment on website contents. Once enabled, an editable environment familiar to most document editors is intergrated to the browser and the contents of the website being browsed become editable.
+So far, we have managed to come up with a way to execute the function \texttt{knit()} on source documents (\texttt{.Rhtml}) while preserving the original information of R code chunks. The next stage of the round trip reflects on our primary objective (of the project), that is to be able to directly edit HTML documents that \texttt{knit()} produces. Possible complications involving the restriction due to \textbf{knitr}'s unidirectional document generation (Section \ref{sec:introduction}) have led us to a decision to implement the use of annotations. Especially the sections of R-related contents in final documentation are considered pointless to be directly edited as it will only result in text-based modification and will not have any impact on generating new results from the modified code. To gain the conceptual benefits of editing as discussed in Section \ref{sec:introduction}, these sections of R-associated contents are decided to be annotated to effectively deliver necessary messages from a person (editor) to another (viewer).
 
-Figure \ref{fig:5} shows the editable environment via \textbf{CKEditor}. Detailed demonstration can be found at \url{http://ckeditor.com/demo}.
+The first task of the function \texttt{snap()} is designed to identify the parts of an input document that should be editable. The editable sections are identified by searching for all top level elements inside the HTML body of the input document that are not introduced by the function \texttt{knit()}. Then two special attributes are inserted into the opening tag of each of these identified, editable elements: one to serve as a marker to let us know the corresponding element is editable and the other to ``number" the editable elements so that we can deal with them in an orderly manner in later steps. The top elements of annotatable sections (the R-associated contents) are identified by their distict attributes defined by \textbf{knitr}.
+After correctly identifying and marking up all the editable elements, the input document is appended with two supplementary sections of code, namely \texttt{button.html} and \texttt{edit.js}. The HTML code piece \texttt{button.html} contains definition of the designs for two HTML buttons called \texttt{save} and \texttt{submit} while the JavaScript code piece \texttt{edit.js} includes a few assigned instructions. Firstly, \texttt{edit.js} loads the \textbf{jQuery} library and two JavaScript modules named \textbf{CKEditor} and \textbf{AnnotateIt} whose respective functions are to enable browser-based editing and annotating on HTML documentation. Secondly, \texttt{edit.js} is instructed with the actions for the \texttt{save} button, which is to save any changes and annotations made via \textbf{CKEditor} and \textbf{AnnotateIt} as separate text files on a server, and for the \texttt{submit} button, which is to re-direct the browser to an uploading web page on the server (which will be discussed shortly) as well as saving the changes and annotations.
+
+Once the input document is merged with the contents of \texttt{button.html} and \texttt{edit.js}, an \texttt{.edit.html} document is generated as the output of the function \texttt{snap()}. The resulting \texttt{.edit.html} document is then uploaded onto our test server through which the actual editing and annotating of the document occur. If we refer back to Listing \ref{lst:4}, the lines 10, 11 and 12 are the three top level elements inside the body of the HTML document. By our definition, the first two elements (lines 10 and 11), which correspond respectively to a (most important) heading and a paragraph, are editable and the third element (line 12), characterised by the attribute \texttt{class="chunk"} as an element added by \textbf{knitr}, is annotatable.
+
+The following code is used in R to call the function \texttt{snap()} on the input document \texttt{example1.post.html} to generate the output document \texttt{example1.edit.html}.
+
+<<eval=FALSE>>=
+source("snap.R")
+snap("example1.post.html")
+@
+
+Listing \ref{lst:5} exhibits the internal code structure of the output document. The highlighted text (lines 10 and 11) shows the attributes added by the function \texttt{snap()}. Note that the first attributes \texttt{contenteditable="true"} are used to let \texttt{snap()} recognise the corresponding elements as editable and the second \texttt{id="Editor"} attributes are used to mark up the elements in a sequential manner.
+
+\begin{lstlisting}[caption={\texttt{example1.edit.html}}, escapechar=\|, label={lst:5}]
+<!DOCTYPE html>
+<html>
+  <head>
+    |\emph{...lines of edit.js...}|
+    |\emph{...lines of style from knitr...}|
+    <title>Example</title>
+  </head>
+  <body>
+    |\emph{...lines of button.html...}|
+    <h1 |\hl{c}{contenteditable="true"}| |\hl{c}{id="Editor-1"}|>Example</h1>
+    <p |\hl{c}{contenteditable="true"}| |\hl{c}{id="Editor-2"}|>20 random variates from the standard normal distribution</p>
+<div class="chunk" id="unnamed-chunk-1"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">rnorm</span><span class="hl std">(</span><span class="hl num">20</span><span class="hl std">)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">##  [1]  0.21997 -1.02766  1.22804  0.78368 -0.09822 -1.41733  0.25276
+##  [8] -0.89354  0.01876  2.55360 -0.46999  1.14496  0.57621 -0.12584
+## [15] -0.40660 -1.74065  0.27885  0.90726 -0.97394  0.62497
+</pre></div>
+</div></div>
+
+    <!--begin.keepcode
+    rnorm(20)
+    end.keepcode-->
+  </body>
+</html>
+\end{lstlisting}
+
+The \texttt{.edit.html} document is then uploaded on to the test server. The browser-display of the document, on the server, can be seen in Figure \ref{fig:5} where the top and bottom displays represent the editable and annotatable environments of \textbf{CKEditor} and \textbf{AnnotateIt} respectively. Editing occurs by each element, that is each section (of the element) must be clicked separately to bring up the editable environment. Attaching annotations requires the user to have an account with \textbf{AnnotateIt} and be logged into their website \url{http://annotateit.org/}. In addition, annotations are made on selections of text of the annotatable sections. Notice the \texttt{save} and \texttt{submit} buttons at the top of the display which can be clicked to save the changes and annotations made. It is of great importance to keep in mind that the execution of editing and annotating takes place simultaneously on the uploaded document to create two separate save files with the information on the annotations and the text-based changes when the \texttt{save} or \texttt{submit} button is clicked.
+
 \begin{figure}[h]
-% trim = left bottom right top
-\includegraphics[trim = 6cm 12cm 1cm 6cm,clip=true,width=0.9\textwidth,center]{ckeditor}
-\caption{\textbf{CKEditor}}
+\includegraphics[trim=0cm 9cm 0cm 3.5cm,clip=true,width=1\textwidth,center]{CKEditor}
+\includegraphics[trim=0cm 11.5cm 0cm 3.5cm,clip=true,width=1\textwidth,center]{AnnotateIt}
+\caption{\texttt{example1.edit.html}, uploaded on the server, in a browser}
 \label{fig:5}
 \end{figure}
 
-As mentioned previously, the restriction of \textbf{knitr}'s unidirectional document generation has a tremendous impact on the parts of documents associated with R. It is pointless to edit R code chunks on the final documents as any changes made on the R code will not be processed by R for regenerating the document with new results. Editing the R code chunks will only result in text-based modification and will not have any impact on the results processed by the R code. Since the contents relating to chunks of R code can (should) not be editable, our solution is to allow them to be annotated. Through the use of annotations, the R-related contents are protected from direct modification while effectively delivering the message from the annotations to the viewer. Our decision to allow annotations on the R contents has led us to test another open source engine, named \textbf{AnnotateIt}, specifically developed for annotating on selected parts of website contents. A possible restriction with using \textbf{AnnotateIt} may be its requirement for users to be logged in on their webiste (\url{http://annotateit.org}). Despite this requirement, it has been tested to be fairly reliable and meet satisfactory standards of our purpose.
+In summary, the function \texttt{snap()}:
+\begin{itemize}
+ \item identifies and marks up all editable top level elements, present in input documents, in a sequential manner, \\[-3ex]
+ \item appends the two supplementary sections of code \texttt{buttons.html} and \texttt{edit.js} into the input documents whose respective purposes are: \\[-3ex]
+ %
+ \begin{enumerate}[i]
+  \item the provision of the designs for the two \texttt{save} and \texttt{submit} buttons and \\[-3ex]
+  \item to load the \textbf{jQuery} library, enable \textbf{CKEditor} and \textbf{AnnotateIt} on editable and annotatable sections of the input documents respectively, and save the changes and annotations made through the two JavaScript modules as text files on the test server when the buttons are clicked, with an additional feature of re-directing the browser to the uploading web page when the \texttt{submit} button is clicked, and
+ \end{enumerate}
+ %
+ \item finally generate \texttt{.edit.html} documents as the output which can then be uploaded onto the server for the actual editing and annotating of the documents to take place.
+\end{itemize}
 
-These two open source engines are browser-integrated, meaning they can only be utilized on website contents (i.e. uploaded HTML documents on servers) via browsers. In other words, we must use browsers to view documents that we wish to edit and annotate through which these two engines to be available. ** We cannot simply view them offline for these two modules to be fully functional **. Therefore, any HTML documents to be edited and annotated must be uploaded onto a server through which \textbf{CKEditor} and \textbf{AnnotateIt} are both fully functional. Thus, it has been decided to integrate a test server into our project. The document that we wish to be able to edit and annotate is uploaded manually using keyboard and mouse onto the test server so that the two engines (\textbf{CKEditor} and \textbf{AnnotateIt}) are correctly called and enabled for the browser. To enhance efficiency, a method to automate the uploading procedure via an R package named \textbf{httr} (using the function \texttt{POST()}) has been applied. However, complications between \texttt{POST()} and \textbf{CKEditor} have resulted in unreliability of the method to indicate that the manual uploading is preferred. Once the document to be edited is correctly uploaded onto our test server, \textbf{CKEditor} and \textbf{AnnotateIt} are enabled on the browser (provided that the user maintains a logged in status with \textbf{AnnotateIt}). The document can then be fully edited and the R-associated sections can be annotated.
+%------------------------------------------------------------------------------
+\subsection{\texttt{annotations()}}
+\label{subsec:3}
+The information on annotations made via the JavaScript module \texttt{AnnotateIt} is accessed from the test server as a text file. The module generates the save file in the JSON format for which we have decided to use an R package called \textbf{jsonlite} to effectively deal with the file format. The save file can be directly fetched from the server by using another R package \textbf{RCurl} and can then be processed, in the manner regarding the JSON format, to generate a message for each annotation. The most informative data such as the selection of text for annotations, the author of the annotations and the annotations themselves are extracted from the save file in order to generate the message.
 
-Before the uploading procedure, appropriate adjustments must be made on the document especially to execute the two previously mentioned modules. In addition, we must be able to save any changes made (through \textbf{CKEditor} and \textbf{AnnotateIt}) so that they are available to be merged into the document in later steps. For this purpose, two supplementary functions are developed, namely \texttt{edit.js} and \texttt{button.html} that are merged into the document we wish to edit (for example, ``example1.post.html") by the function \texttt{snap()}. Firstly, \texttt{button.html} is a simple HTML document that contains information on how \emph{save} and \emph{submit} buttons are laid out on the document being browsed. The specific task of the buttons are defined in the JavaScript \texttt{edit.js} that is primarily written in the jQuery syntax which fully supports integration of JavaScript code into HTML documents. Secondly, \texttt{edit.js} has several tasks assigned to carry out, one of which is to call \textbf{CKEditor} and \textbf{AnnotateIt} so that the browser has those engines enabled. Other tasks are to save any changes made on the document when \emph{save} button is clicked to a specific PHP web address as a text file. When \emph{submit} button is clicked, the browser takes us to the uploading page as well as saving the changes for optimized efficiency. Our proposed idea is that the user can simply click the \emph{submit} button after final correction on the document has been made to go back to the uploading page with ease. We should note that annotations (from \textbf{AnnotateIt}) are saved as the JSON format, which is a widely used format as an alternative to XML to transfer information between a server and application. Changes from \textbf{CKEditor} are saved in the plain text format.
+Figure \ref{fig:6} is a minimal demonstration of creating an annotation. The last random variate is selected to be marked with the annotation ``Example". Upon clicking the blue \texttt{Save} button on the pop-up window, a save file is created by \textbf{AnnotateIt} on the test server.
 
-Our algorithm for the editing stage involves an idea that each top level element of an HTML document (elements inside the HTML body) should be editable. This idea is facilitated by the fact that \textbf{CKEditor} is reasonably robust to take nested elements (such as div and table elements) into account to allow for the possibility of editing the contents in these elements. Once all the top level elements inside the HTML body are identified, the process of determining which content to be editable can be figured out with ease. The function \texttt{snap()} utilizes the XML syntax to robustly identify all the top level elements except the R code chunks, and insert the attribute ``\texttt{contenteditable="true"}" for each of these identified elements. In addition, attributes named \texttt{"editor"} are sequentially generated by the function and are assigned to these editable elements to serve as markers whose roles are discussed in later section. Through the pre-specified task coded in \texttt{edit.js}, the editable environment from \textbf{CKEditor} is enabled on the corresponding contents in the browser upon selection by clicking. Furthermore, any elements of R code chunks can also be reliably identified through the use of the XML syntax along with one of the properties of \textbf{knitr}. Visiting back to Listing \ref{lst:4}, the briefly mentioned idea of R code chunks being contained inside div elements can be effectively used. By searching for top level div elements with the class attribute of \texttt{"chunks"}, all the existing R code chunks (in knitted documents) can be effectively identified. This search algorithm is used in \texttt{edit.js} to identify any R code chunks in a document and call the \textbf{AnnotateIt} module on those chunks to allow annotations on them. An extremely important assumption for this task is that \textbf{knitr} remains consistent in the way that R code chunks are wrapped in these specific div elements. If \textbf{knitr} decides to use a different type of elements and/or assign different attributes to those elements (could be possibe with an update), our algorithm will fail due to the extensive use of a method to search specifically for the top level div elements with class attribute \texttt{"chunks"}. However, the mission of modifying the function \texttt{snap()} in case of the change in \textbf{knitr} seems to be trivial as it can be effortlessly adjusted to search for a new type of elements.
+\begin{figure}[h]
+\includegraphics[trim=0cm 11.5cm 0cm 3.5cm,clip=true,width=1\textwidth,center]{annotations}
+\caption{annotating on \texttt{example1.edit.html}}
+\label{fig:6}
+\end{figure}
 
+The following code is used in R to call the function \texttt{annotations()} on the input document \texttt{example1.edit.html} to generate the output document \texttt{example1.anns.html}.
 
+<<eval=FALSE>>=
+source("annotations.R")
+annotations("example1.edit.html")
+@
 
+Listing \ref{lst:6} is the internal code structure of the output document \texttt{example1.anns.html} where the highlighted lines of text (lines 12--14) represent the message genereated according to the information from the save file. The message is in a paragraph tag with the \texttt{class="annotation"} and its own style attributes.
 
-% \subsection{\texttt{annotations()}}
+\begin{lstlisting}[caption={\texttt{example1.anns.html}}, escapechar=\|, label={lst:6}]
+<!DOCTYPE html>
+<html>
+  <head>
+    |\emph{...lines of edit.js...}|
+    |\emph{...lines of style from knitr...}|
+    <title>Example</title>
+  </head>
+  <body>
+    |\emph{...lines of button.html}|
+    <h1 contenteditable="true" id="Editor-1">Example</h1>
+    <p contenteditable="true" id="Editor-2">20 random variates from the standard normal distribution</p>
+|\hl{c}{<p class="annotation" style = "background-color:coral">}|
+|\hl{c}{The text "-1.88681" was annotated with the message "Example" by "e.lim0322"}|
+|\hl{c}{</p>}|
+<div class="chunk" id="unnamed-chunk-1"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">rnorm</span><span class="hl std">(</span><span class="hl num">20</span><span class="hl std">)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">##  [1] -0.21445 -0.03694  1.15209 -0.75281  0.66412 -1.14614 -0.98223
+##  [8] -1.10767 -1.91184  2.00111  0.66261 -1.00241 -0.41161 -0.07720
+## [15] -1.20503 -1.77474 -1.05262 -3.28418  0.76983 -1.88681
+</pre></div>
+</div></div>
+
+    <!--begin.keepcode
+    rnorm(20)
+    end.keepcode-->
+  </body>
+</html>
+\end{lstlisting}
+
+Figure \ref{fig:7} shows the document \texttt{example1.anns.html} in a browser. The text highlighted in red is the message.
+
+\begin{figure}[h]
+\includegraphics[trim=0cm 19.5cm 0cm 3.2cm,clip=true,width=1.1\textwidth,center]{example1_anns}
+\caption{\texttt{example1.anns.html} in a browser}
+\label{fig:7}
+\end{figure}
+
+%------------------------------------------------------------------------------
+\subsection{\texttt{changes()}}
+\label{subsec:4}
+The primary task assigned to the function \texttt{changes()} is to access the save file for the changes made through \textbf{CKEditor} from the server and replace the old, modified text (in the input document) with the new text (in the save file). This replacement takes place only for the sections that are actually edited.
+
+Figure \ref{fig:8} illustrates a brief demonstration of how the process of editing is carried out. The first editable section, which is the heading, is left as it is while the second editable section is chosen to be edited. The original line of text ``20 random variates from..." is to be edited with the bold faced text ``20 normal random variates". When the grey \texttt{save} button is clicked, the save file of the change is created on the server which is a simple text file with the code structure as shown in Listing \ref{lst:7}.
+
+\begin{figure}[h]
+\includegraphics[trim=0cm 12cm 0cm 3.5cm,clip=true,width=1\textwidth,center]{changes}
+\caption{editing \texttt{example1.edit.html}}
+\label{fig:8}
+\end{figure}
+
+Note the first line in Listing \ref{lst:7}. This line corresponds to the editable element (in \texttt{example1.edit.html}) with an attribute defined as \texttt{Editor-1}, that is the line 10 in Listing \ref{lst:5}, which is the heading. As we can see the heading is ``\texttt{NOT MODIFIED}" to allow the function \texttt{changes()} to ignore this editable section  of the document. On the other hand, the line 4 displays the desired change on the second editable section.
+
+\begin{lstlisting}[caption={\texttt{changes.txt}}, escapechar=\|, label={lst:7}]
+EDITOR Editor-1 NOT MODIFIED
+
+EDITOR Editor-2:
+<strong>20 normal random variates</strong>
+\end{lstlisting}
+
+The following code is used in R to call the function \texttt{changes()} on the input document \texttt{example1.anns.html} to generate the output document \texttt{example1.save.html}.
+
+<<eval=FALSE>>=
+source("changes.R")
+changes("example1.anns.html")
+@
+
+The internal code structure of the output document \texttt{example1.save.html} can be seen in Listing \ref{lst:8}. The highlighted text (line 12) shows that the old line (line 11 in Listing \ref{lst:6}) is replaced with the change (line 4 in Listing \ref{lst:7}) by \texttt{snap()} to result in a display through a browser as shown in Figure \ref{fig:9}.
+
+\begin{lstlisting}[caption={\texttt{example1.save.html}}, escapechar=\|, label={lst:8}]
+<!DOCTYPE html>
+<html>
+  <head>
+    |\emph{...lines of edit.js...}|
+    |\emph{...lines of style from knitr...}|
+    <title>Example</title>
+  </head>
+  <body>
+    |\emph{...lines of button.html}|
+    <h1 contenteditable="true" id="Editor-1">Example</h1>
+    <p contenteditable="true" id="Editor-2">
+|\hl{c}{<strong>20 normal random variates</strong>}|
+    </p>
+    <p class="annotation" style = "background-color:coral">
+    The text "-1.88681" was annotated with the message "Example" by "e.lim0322"
+    </p>
+<div class="chunk" id="unnamed-chunk-1"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">rnorm</span><span class="hl std">(</span><span class="hl num">20</span><span class="hl std">)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">##  [1] -0.21445 -0.03694  1.15209 -0.75281  0.66412 -1.14614 -0.98223
+##  [8] -1.10767 -1.91184  2.00111  0.66261 -1.00241 -0.41161 -0.07720
+## [15] -1.20503 -1.77474 -1.05262 -3.28418  0.76983 -1.88681
+</pre></div>
+</div></div>
+
+    <!--begin.keepcode
+    rnorm(20)
+    end.keepcode-->
+  </body>
+</html>
+\end{lstlisting}
+
+The text is successfully edited in Figure \ref{fig:9}.
+
+\begin{figure}[h]
+\includegraphics[trim=0cm 19.5cm 0cm 3.2cm,clip=true,width=1.1\textwidth,center]{example1_save}
+\caption{\texttt{example1.save.html} in a browser}
+\label{fig:9}
+\end{figure}
+
+%------------------------------------------------------------------------------
+\subsection{\texttt{rip()}}
+\label{subsec:5}
+The main purpose of the function \texttt{rip()} is in the source document generation. It searches for any foreign lines of code that are introduced by \textbf{knitr} or inserted during certain stages of the round trip, and removes those lines. Typically, the lines of the CSS style inserted by \textbf{knitr} are removed first, followed by the lines corresponding to the \texttt{div} elements generated and inserted by \textbf{knitr} (e.g. lines 17--23 in Listing \ref{lst:8}). These \texttt{div} elements are defined with the attribute \texttt{class="chunk"} which can be identified by \texttt{snap()} to recognise them as the elements introduced by \textbf{knitr}. Then the copies of the original R code chunks (lines 12--14 in Listing \ref{lst:3}) are modified by \texttt{snap()} to be exactly as the originals. The text ``\texttt{keep}" in the comment tags of the copy (lines 12 and 14 in Listing \ref{lst:3}) are identified and converted to the letter ``\texttt{r}" so that both the opening and closing comment tags are like the originals. The lines of \texttt{button.html} and \texttt{edit.js} are also removed as well as the two attributes \texttt{contenteditable="true"} and \texttt{id="Editor"}, added to mark up the corresponding elements as editable (Section \ref{subsec:2}).
+
+The following R code calls the function \texttt{rip()} on the input document \texttt{example1.save.html} to generate the output document \texttt{example1.return.Rhtml}.
+
+<<eval=FALSE>>=
+source("rip.R")
+rip("example1.save.html")
+@
+
+The internal code structure of the output document \texttt{example1.return.Rhtml} can be seen in Listing \ref{lst:9}. If we compare the code structure of the source document \texttt{example1.Rhtml} with that of \texttt{example1.return.Rhtml}, we can notice that line 8 in Listing \ref{lst:1} (original) is replaced by the edited text in line 9 of Listing \ref{lst:9}. Lines 11--13 in Listing \ref{lst:9} are the generated messages for the annotations from the previous step (Section \ref{subsec:3}). Apart from these lines, the rest of both documents are identical.
+
+\begin{lstlisting}[caption={\texttt{example1.save.html}}, escapechar=\|, label={lst:9}]
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Example</title>
+  </head>
+  <body>
+    <h1>Example</h1>
+    <p>
+<strong>20 normal random variates</strong>
+    </p>
+    <p class="annotation" style = "background-color:coral">
+    The text "-1.88681" was annotated with the message "Example" by "e.lim0322"
+    </p>
+    <!--begin.rcode
+    rnorm(20)
+    end.keepcode-->
+  </body>
+</html>
+\end{lstlisting}
+
+We can knit the ``final" source document \texttt{example1.return.Rhtml} by the following code in R.
+
+<<eval=FALSE>>=
+knit("example1.return.Rhtml")
+@
+
+The display of the knitted document \texttt{example1.return.html} through a browser can be seen in Figure \ref{fig:10}.
+
+\begin{figure}[h]
+\includegraphics[trim=0cm 22cm 0cm 0cm,clip=true,width=1.1\textwidth,center]{example1_return}
+\caption{\texttt{example1.return.html} in a browser}
+\label{fig:10}
+\end{figure}
+
+%------------------------------------------------------------------------------
 % \subsection{\texttt{changes()}}
 % In later stage where changes (from \textbf{CKEditor}) are merged into the document, random ordering of these chunks
 % \subsection{\texttt{rip()}}
 % \section{Discussion}
 % In addition, possible ethical issues arising from post modification of R code and their results, after the output documents are generated, can be avoided.
+% Throughout the project, many important assumptions have emerged from time to time which have played an important role in improving the robustness of our methodology on the completion of the round trip. These assumptions should be regarded as .... Therefore, it is absolutely necessary to mention them along with more detailed discussion on the reasoning behind the logic of our functions.
+
+% Function:sew()
+% We decided to use the HTML comment method so that the copies are not displayed (because they are comments) and other benefits. The sections of any R related contents in final documents should not be directly modified considering the unidirectional property of \textbf{knitr} (explored in Section \ref{sec:introduction})...
+
+% snap()
+% The reason for uploading onto the test server is so the user does not have to go through localizing CKEditor in his/her device. i.e. CKEditor is already enabled.
+% Reason for choosing JavaScript and CKEditor & AnnotateIt.
+% A possible restriction with using \textbf{AnnotateIt} may be its requirement for users to be logged in on their webiste (\url{http://annotateit.org}). Despite this requirement, it has been tested to be fairly reliable and meet satisfactory standards of our purpose.
+% Use of XML for robust/precise searching.
+% There are two supplementary sections of code that are defined externally in separate files so that we can explicitly make changes on them without changing snap() itself.
+
+% annotations()
+% The text file is in the JSON format.
+% Complications from annotating on the same words..
+
 
 % \section{Contributions}
+% Paul did...
 \end{document}

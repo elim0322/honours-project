@@ -35,7 +35,7 @@ changes <- function(infile = NULL, outfile = NULL) {
     # Which of the "editor..." lines contain "NOT MODIFIED"?
     # Return a number to indicate which editor chunk is modified.
     which.chunks <- grep("NOT MODIFIED", editor[editor.start])
-        
+    
     ###########################################################################
     ############################## source bits ################################
     ###########################################################################
@@ -46,7 +46,7 @@ changes <- function(infile = NULL, outfile = NULL) {
     endTags <- gsub("(^.*<)(.+?)\\s.+$", "\\1/\\2>", src[src.start])
     # Get rid of any white spaces before and in front of the end tags.
     endTags <- gsub("\\s*", "", endTags)
-
+    
     ##### Generate src.end
     html <- htmlParse(infile)
     src.end <- vector("numeric", length = length(src.start))
@@ -84,28 +84,33 @@ changes <- function(infile = NULL, outfile = NULL) {
     src.chunks <- mapply(FUN = seq, src.start, src.end, SIMPLIFY = FALSE)
     
     ##### Find which src lines are actually to be edited.
-    for (i in 1:length(which.chunks)) {
-        # Find the "id" of "NOT MODIFIED" editor chunks
-        notEditedLines <- unlist(editor.chunks[which.chunks[i]])
-        # Remove some strings to get the right id (i.e. "Editor-##").
-        notEditedId <- gsub("^EDITOR\\s(.+)\\sNOT MODIFIED$", "\\1",
-                            editor[notEditedLines][1])
-        
-        # Match the id from editor to the src chunks
-        notEditedIndex <- sapply(src.chunks,
-                                 function(x) {
-                                     grepl(notEditedId, src[x[1]])
-                                 })
-        # "notEditedIndex" is a logical vector, TRUE for the correct match
-        #  so we want to subset for the FALSE ones.
-        src.chunks <- src.chunks[!(notEditedIndex)]
+    # In case ALL editable sections are being edited.
+    if (length(which.chunks) > 0) {
+        for (i in 1:length(which.chunks)) {
+            # Find the "id" of "NOT MODIFIED" editor chunks
+            notEditedLines <- unlist(editor.chunks[which.chunks[i]])
+            # Remove some strings to get the right id (i.e. "Editor-##").
+            notEditedId <- gsub("^EDITOR\\s(.+)\\sNOT MODIFIED$", "\\1",
+                                editor[notEditedLines][1])
+            
+            # Match the id from editor to the src chunks
+            notEditedIndex <- sapply(src.chunks,
+                                     function(x) {
+                                         grepl(notEditedId, src[x[1]])
+                                     })
+            # "notEditedIndex" is a logical vector, TRUE for the correct match
+            #  so we want to subset for the FALSE ones.
+            src.chunks <- src.chunks[!(notEditedIndex)]
+        }
     }
     
     ###########################################################################
     #################### Replace old lines with new lines #####################
     ###########################################################################
     ##### Get rid of "NOT MODIFIED" lines.
-    editor.chunks <- editor.chunks[-which.chunks]
+    if (length(which.chunks) > 0) {
+        editor.chunks <- editor.chunks[-which.chunks]
+    }
     
     ##### Check if the lengths are equal.
     if (length(editor.chunks) != length(src.chunks)) {
@@ -120,6 +125,10 @@ changes <- function(infile = NULL, outfile = NULL) {
         #  remove the rest.
         new.src[i] <- gsub("(.*?<.+?>).+$", "\\1", src[src.start[i]])
     }
+    if (length(which.chunks) > 0) {
+        new.src <- new.src[-which.chunks]
+    }
+    
     # Go BACKWARDS through file, replacing last chunk first
     # (so that indices for lines-to-change remain valid)
     for (i in length(editor.chunks):1) {
