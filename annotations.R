@@ -17,7 +17,7 @@ annotations <- function(infile = NULL, outfile = NULL) {
     
     # numAnn: number of annotations
     #  (each ctrl+drag annotation is counted as a single annotation)
-    numAnn <- length(json$rows)
+    numAnn <- length(json)
     
     # Create a copy of "Attempt.edit.html" and save it as "Attempt.save.html"
     #  so I can write lines into "Attempt.save.html" and carry out other
@@ -28,8 +28,7 @@ annotations <- function(infile = NULL, outfile = NULL) {
     file.copy(infile, outfile, overwrite = TRUE)
     
     for (i in 1:numAnn) {
-        ann <- json$rows[[i]]
-        who <- ann$user
+        ann <- json[[i]]
         annotation <- ann$text
         # ASSUME only one ranges value
         # Even with ctrl+select annotations, we are using the first list
@@ -62,7 +61,7 @@ annotations <- function(infile = NULL, outfile = NULL) {
         anno.tags <- c('    <p class="annotation" style = "background-color:coral">', 
                        paste("    The text \"", what, 
                              "\" was annotated with the message \"", 
-                             annotation, "\" by \"", who, "\"", sep=""),
+                             annotation, "\"", sep=""),
                        "    </p>")
         
         xpath <- paste("/html/body/div[@class='chunk']", where.start, 
