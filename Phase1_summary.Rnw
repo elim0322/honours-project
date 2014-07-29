@@ -506,7 +506,7 @@ The text is successfully edited in Figure \ref{fig:9}.
 %------------------------------------------------------------------------------
 \subsection{\texttt{rip()}}
 \label{subsec:5}
-The main purpose of the function \texttt{rip()} is in the source document generation. It searches for any foreign lines of code that are introduced by \textbf{knitr} or inserted during certain stages of the round trip, and removes those lines. Typically, the lines of the CSS style inserted by \textbf{knitr} are removed first, followed by the lines corresponding to the \texttt{div} elements generated and inserted by \textbf{knitr} (e.g. lines 17--23 in Listing \ref{lst:8}). These \texttt{div} elements are defined with the attribute \texttt{class="chunk"} which can be identified by \texttt{snap()} to recognise them as the elements introduced by \textbf{knitr}. Then the copies of the original R code chunks (lines 12--14 in Listing \ref{lst:3}) are modified by \texttt{snap()} to be exactly as the originals. The text ``\texttt{keep}" in the comment tags of the copy (lines 12 and 14 in Listing \ref{lst:3}) are identified and converted to the letter ``\texttt{r}" so that both the opening and closing comment tags are like the originals. The lines of \texttt{button.html} and \texttt{edit.js} are also removed as well as the two attributes \texttt{contenteditable="true"} and \texttt{id="Editor"}, added to mark up the corresponding elements as editable (Section \ref{subsec:2}).
+The main purpose of the function \texttt{rip()} is to return to the original source document format while retaining changes and annotations. It searches for any foreign lines of code that are introduced by \textbf{knitr} or inserted during certain stages of the round trip, and removes those lines. Typically, the lines of the CSS style inserted by \textbf{knitr} are removed first, followed by the lines corresponding to the \texttt{div} elements generated and inserted by \textbf{knitr} (e.g. lines 17--23 in Listing \ref{lst:8}). These \texttt{div} elements are defined with the attribute \texttt{class="chunk"} which can be identified by \texttt{snap()} to recognise them as the elements introduced by \textbf{knitr}. Then the copies of the original R code chunks (lines 12--14 in Listing \ref{lst:3}) are modified by \texttt{snap()} to be exactly as the originals. The text ``\texttt{keep}" in the comment tags of the copy (lines 12 and 14 in Listing \ref{lst:3}) are identified and converted to the letter ``\texttt{r}" so that both the opening and closing comment tags are like the originals. The lines of \texttt{button.html} and \texttt{edit.js} are also removed as well as the two attributes \texttt{contenteditable="true"} and \texttt{id="Editor"}, added to mark up the corresponding elements as editable (Section \ref{subsec:2}).
 
 The following R code calls the function \texttt{rip()} on the input document \texttt{example1.save.html} to generate the output document \texttt{example1.return.Rhtml}.
 
@@ -553,28 +553,31 @@ The display of the knitted document \texttt{example1.return.html} through a brow
 \end{figure}
 
 %------------------------------------------------------------------------------
-% \subsection{\texttt{changes()}}
-% In later stage where changes (from \textbf{CKEditor}) are merged into the document, random ordering of these chunks
-% \subsection{\texttt{rip()}}
-% \section{Discussion}
-% In addition, possible ethical issues arising from post modification of R code and their results, after the output documents are generated, can be avoided.
-% Throughout the project, many important assumptions have emerged from time to time which have played an important role in improving the robustness of our methodology on the completion of the round trip. These assumptions should be regarded as .... Therefore, it is absolutely necessary to mention them along with more detailed discussion on the reasoning behind the logic of our functions.
+\section{Discussion}
+\label{sec:discussion}
+There are a few restrictions in the round trip that need to be discussed. Some of the steps involved in the round trip base their algorithms on the assumption that \textbf{knitr} remains consistent. For example, identifying the annotatable elements (Section \ref{subsec:2}) is carried out under the assumption that these elements are always given the attribute \texttt{class="chunk"} by \textbf{knitr}. If there is to be a change in \textbf{knitr} that affects the structure of the annotatable elements, especially their attributes, the round trip will fail to complete the cycle and we will have to devise a new measure for the change.
 
-% Function:sew()
-% We decided to use the HTML comment method so that the copies are not displayed (because they are comments) and other benefits. The sections of any R related contents in final documents should not be directly modified considering the unidirectional property of \textbf{knitr} (explored in Section \ref{sec:introduction})...
+The editing and annotating stage of the round trip is limited to what \textbf{CKEditor} and \textbf{AnnotateIT} offer as the necessary tools. The requirement by \textbf{AnnotateIT} for its user to maintain a logged-in status with their website is a restriction that can be avoided altogether by implementing a different annotator module. The overall process of editing and annotating can be more efficient and flexible to allow for more extensive document editing by the use of modules that have relatively less restrictions than \textbf{CKEditor} and \textbf{AnnotateIT}.
 
-% snap()
-% The reason for uploading onto the test server is so the user does not have to go through localizing CKEditor in his/her device. i.e. CKEditor is already enabled.
-% Reason for choosing JavaScript and CKEditor & AnnotateIt.
-% A possible restriction with using \textbf{AnnotateIt} may be its requirement for users to be logged in on their webiste (\url{http://annotateit.org}). Despite this requirement, it has been tested to be fairly reliable and meet satisfactory standards of our purpose.
-% Use of XML for robust/precise searching.
-% There are two supplementary sections of code that are defined externally in separate files so that we can explicitly make changes on them without changing snap() itself.
+Furthermore the efficiency of the round trip may improve by the use of a different HTML editor. One of the main reasons behind the uploading procedure is to enable \textbf{CKEditor} without having to localise the module in the user's computing environment. If it is possible to integrate an HTML editor, into the round trip, that does not pose the localisation problem the uploading step can be omitted to make more efficient and tidier document generation and editing through the round trip possible.
 
-% annotations()
-% The text file is in the JSON format.
-% Complications from annotating on the same words..
+By using a different HTML editor, we can also reduce some of the problems arising from the uploading stage of the round trip. Currently it is not possible to upload external files such as image files that are produced by R on the test server. As a result, any graphics included in the uploaded documents cannot be displayed through a browser. Again this issue can be avoided by using suitable HTML editors that do not require the server integration. A possible future direction of the project in regards to these limitations is in generalising the round trip so that the user gets to choose which HTML editors to use for the round trip.
 
+There is a possibility of an alternative approach to the round trip. This would be to integrate a wiki or an online document system (e.g. Google Docs) as the main editing tool. These tools may improve the efficiency of the overall editing process through more dynamic and responsive process of document editing.
 
-% \section{Contributions}
-% Paul did...
+Finally, we need to consider how the sections of images, mathematical equations and general tables could be edited in a document. A possible approach to the problem is to allow annotations on them as we cannot directly interfere with the contents of these sections. A better approach would be to utilise a suitable JavaScript module written for the purpose of editing or annotating on these specific sections.
+
+%------------------------------------------------------------------------------
+\section{Conclusion}
+Our ultimate goal remains to be in further generalising the round trip to suit a broader spectrum of document types. The first phase of the project has explored the possibilities of a complete round trip between the source and final documents to enhance the flow of the document generation process. So far the phase 1 round trip is strictly limited to the HTML type of documentation. However, we hope that our suggested ideas involved with each step of the round trip can be used by others to further optimise the procedures invovled in statistical document generation.
+
+%------------------------------------------------------------------------------
+\section{Contributions}
+List of contributions from the project supervisor Dr Paul Murrell:
+\begin{itemize}
+ \item ideas
+ \item \texttt{edit.js}
+ \item \texttt{button.html}
+\end{itemize}
+
 \end{document}
