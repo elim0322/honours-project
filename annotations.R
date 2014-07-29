@@ -3,16 +3,21 @@ library(XML)
 library(RCurl)
 library(httr)
 
-annotations <- function(infile = NULL, outfile = NULL) {
+annotations <- function(infile = NULL, outfile = NULL, annfile = NULL) {
     if (is.null(infile)) {
         infile <- load.dir()
     }
     if (!grepl("edit.html$", infile))
         stop("infile is not an edit.html file")
-    
+
     #### Extract useful information from "test-annotations.txt" using json ####
-    temp <- getURL("http://stat220.stat.auckland.ac.nz/cke/test-annotations.txt",
-                   userpwd="cke:cke")
+    if (is.null(annfile)) {
+        temp <- getURL("http://stat220.stat.auckland.ac.nz/cke/test-annotations.txt",
+                       userpwd="cke:cke")
+    } else {
+        temp <- readLines(annfile)
+    }
+    
     json <- fromJSON(temp, simplifyVector = FALSE)
     
     # numAnn: number of annotations
