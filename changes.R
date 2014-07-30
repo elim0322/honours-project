@@ -1,7 +1,7 @@
 library(XML)
 library(RCurl)
 
-changes <- function(infile = NULL, outfile = NULL) {
+changes <- function(infile = NULL, outfile = NULL, changefile = NULL) {
     if (is.null(infile)) {
         infile <- load.dir()
     }
@@ -9,11 +9,16 @@ changes <- function(infile = NULL, outfile = NULL) {
         stop("infile is not an anns.html file")
     
     src <- readLines(infile)
-    editor <- getURL("http://stat220.stat.auckland.ac.nz/cke/test-changes.txt",
-                     userpwd="cke:cke")
-    # getURL() loads "test-changes.txt" in one long vector so need to split by
-    #  the carriage return, "\n"
-    editor <- unlist(strsplit(editor, "\\n"))
+
+    if (is.null(changefile)) {
+        editor <- getURL("http://stat220.stat.auckland.ac.nz/cke/test-changes.txt",
+                         userpwd="cke:cke")
+        # getURL() loads "test-changes.txt" in one long vector so need to
+        # split by the carriage return, "\n"
+        editor <- unlist(strsplit(editor, "\\n"))
+    } else {
+        editor <- readLines(changefile)
+    }
     
     ###########################################################################
     ############################### Editor bits ###############################
