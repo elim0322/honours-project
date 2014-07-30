@@ -46,11 +46,6 @@ rip <- function(infile = NULL, outfile = NULL) {
     src <- gsub("(.+[.])(keep)(code.*$)", "\\1r\\3", src)
     src <- gsub("<!--keep.rinline", "<!--rinline", src)
     
-    ####################### Remove extra spaces added #########################
-    # An empty space seems to be added before each R chunk
-    extra <- grep("<!--begin.rcode", src)-1
-    src <- src[-extra]
-    
     ## Remove jQuery, CKEditor, annotator.js and their functions ###
     # Search for the starting line of "edit.js" in src, then remove
     #  from that line up to the end line of edit.js (which should be
