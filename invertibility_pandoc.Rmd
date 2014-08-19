@@ -1,17 +1,20 @@
 Invertible workflow using Pandoc
-===============================
+================================
+
+```{r, echo=FALSE}
+library(knitr)
+opts_chunk$set(comment=NA, prompt=TRUE, tidy=FALSE, background='white')
+options(prompt="R> ")
+```
 
 Introduction
 ------------
-[Pandoc](http://johnmacfarlane.net/pandoc/) is a "universal document converter" that provides document conversion between various formats. The tool is much more generalised than our proposed invertible, reproducible workflow using **knitr** to support nearly every markup format that exists today. As a student undertaking a project associated with document generation, it is worthwhile to explore any insights that Pandoc can provide to assist in my project. 
+We have explored an invertible, reproducible document generation pathway using **knitr**. So far, the invertible workflow is limited to conversion between `.Rhtml` and HTML formats, and vice versa. We would like to investigate the possibilities of extending the workflow to support other formats.
 
-Markdown format
----------------
-The primary purpose of the [Markdown](http://daringfireball.net/projects/markdown/) format is to incorporate readability in its plain text formatting syntax (easy-to-read and easy-to-write plain text format), rather than the often used, complex markup document format. Although Markdown documents are originally intended to be viewed as they are (i.e., their source code), they can also be converted naturally  to the HTML format to be viewed in a web browser.
+One of the most plausible formats to consider is [Markdown](http://daringfireball.net/projects/markdown/) which is an increasingly popular format that can be easily converted to the HTML format. The primary purpose of the Markdown format is to incorporate readability in its plain text formatting syntax (easy-to-read and easy-to-write plain text format), as opposed to the often used, complex document markup format. Despite the original purpose, Markdown documents are also designed to be naturally converted to HTML documents to be viewed in a web browser. As of the June 2014 update, **RStudio** supports "next generation of R Markdown based on pandoc" which means a Markdown document can be converted to HTML, PDF and Word documents by **RStudio** of version 0.98.932 and above. This update is most likely to increase the use of the already popular Markdown format due to more flexible document generation.
 
-As of the June 2014 update, **RStudio** supports "next generation of R Markdown based on pandoc" which means a Markdown document can be converted to HTML, PDF and Word documents by **RStudio** of version 0.98.932 and above. This update is most likely to influence users to rely on using Markdown documentation more frequently, if not before, due to the increased document generation flexibility.
+A tool worth investigating is [Pandoc](http://johnmacfarlane.net/pandoc/) which is a "universal document converter" that provides conversion between various document formats. The tool is very generalised to support nearly every markup language format that exists today. What we are primarily interested in Pandoc is in the way that HTML documents are converted from Markdown documents, and vice versa. If Pandoc is able to successfully convert Markdown documents into HTML documents and invert from the HTML documents to the original Markdown documents (as we have in our project), we may consider the possibility of integrating Pandoc or similar ideas into our invertible workflow.
 
-Considering these facts, the Markdown format is chosen to be the primary test format in this experiment.
 
 Invertibility of Pandoc
 -----------------------
@@ -28,6 +31,7 @@ A simple Markdown document from http://rmarkdown.rstudio.com/ is used as an exam
     *italics* and **bold**.
     
     Create lists with a dash:
+    
     - Item 1
     - Item 2
     - Item 3
@@ -40,56 +44,131 @@ A simple Markdown document from http://rmarkdown.rstudio.com/ is used as an exam
     ```
     
     > Blockquotes are offset
-    
 
-**knitr** supports Pandoc in its own way by allowing users, who are not familiar with the command line syntax, to execute Pandoc document conversion in the R syntax ([demo](http://yihui.name/knitr/demo/pandoc/)). The R code below is used to generate an HTML document based on `example.md`. The last line of the below R code is not correctly processed by **knitr** and `example.html` is not converted to `example.return.md`, unless a config file (a simple text file) containing optional arguments for Pandoc is created and called locally. This may be a bug in **knitr** or a way to prevent the invertible process between the two document formats.
-
-```{r}
-library(knitr)
-# generate 'example.html' based on 'example.md'
-pandoc('example.md', format='html')
-# generate 'example.return.md' based on 'example.html'
-pandoc('example.html', ext='return.md', format='markdown')
-```
-
-Alternatively, we can use the below R code in the command line syntax to correctly generate the document `example.return.md`.
-
+We can use the below R code in the command line syntax to correctly generate the document `example.return.md`.
 ```{r}
 system("pandoc -o example.return.md example.md")
 ```
 
-The code structure of `example.return.md` can be seen below:
-
-    Header 1
-    --------
-    
-    This is an R Markdown document. Markdown is a simple formatting syntax
-    for authoring web pages.
-    
-    Use an asterisk mark, to provide emphasis such as *italics* and
-    **bold**.
-    
-    Create lists with a dash: - Item 1 - Item 2 - Item 3
-    
-    You can write `in-line` code with a back-tick.
-    
-        Code blocks display
-        with fixed-width font
-    
-    > Blockquotes are offset
-    
-    
-
-The source documents, `example.md` and `example.return.md`, have different code structures. Most commonly, Pandoc inserts and deletes carriage returns on its own to result in a document of different length in comparison to the initial document length. If the sole difference between the two source documents is in the amount of white spaces, that are inserted by Pandoc, then we can safely ignore this issue by using the option, `-b`, in using `diff` command to ignore changes in the amount of white spaces. Then `diff` will not detect any changes to suggest that the source documents are identical. However Pandoc not only manipulates carriage returns but also attempts to break lines of code in its own way to result in a difference that cannot be ignored by `diff`.
-
-More serious problems are the deleted dashes in the second line of the documents (for the heading) and the use of different syntax to display code blocks. Both problems will result as distinct differences detected by `diff`:
-
-```{r}
-system("diff -b example.md example.return.md")
+The code structure of `example-return.md` can be seen below:
 ```
+Header 1
+--------
+
+This is an R Markdown document. Markdown is a simple formatting syntax
+for authoring web pages.
+
+Use an asterisk mark, to provide emphasis such as *italics* and
+**bold**.
+
+Create lists with a dash:
+
+-   Item 1
+-   Item 2
+-   Item 3
+
+You can write `in-line` code with a back-tick.
+
+    Code blocks display
+    with fixed-width font
+
+> Blockquotes are offset
+```
+
+The source documents, `example.md` and `example-return.md`, have reasonably similar code structures. We can see some white spaces added during the inversion (such as `- Item 1` and `-   Item 1`) which can be easily ignored by using the option, `-b`, in using `diff` command to ignore changes in the amount of white spaces.
+
+More serious problems are the deleted dashes for the headings, which seem primarily to match the length of the text for the heading (for tidiness), and the use of the alternative syntax to display code blocks (` ``` ` becomes 4 empty spaces or a tab). In addition, Pandoc seems to cut lines based on certain text width, that looks about 75 characters. Both problems will result as distinct differences detected by `diff`.
+```{r}
+cat(system("diff -b example.md example-return.md", intern=TRUE), sep="\n")
+```
+
+These differences result from the fact that Pandoc relies on the internally defined structure. The inversion from `example.html` to `example-return.md` by Pandoc is carried out using only the information provided by the structure of `example.html`. Pandoc has no way of considering the structure of the orignal source document, `example.md`, in generating `example-return.md`. If Pandoc does rely on the internal structure that is set to be obeyed, every time a document is converted into a different format and inverted back to the source format the final source document must have a consistent structure that follows the internally set rule. And the final source document must produce an identical document after another conversion process.
+
+Hence, `example-return.md` is converted to `example-return.html` and inverted back to `example-final.md` to see if `example-return.md` and `example-final.md` are identical:
+```{r}
+system("pandoc -o example-return.html example-return.md")
+system("pandoc -o example-final.md example-return.html")
+system("diff example-return.md example-final.md")
+```
+
+The two documents are indeed identical to suggest that Pandoc has an internally defined structure that is obeyed during document generation. From the structure of `example-return.md`, a few speculations of the rules that the internal structure is based on can be made:
+- The header syntax, dashes and equal signs, are presumably extended or shortened to match the length of the actual text for the header.
+- There is a set maximum character width on which Pandoc decides to cut lines of text.
+- Two extra empty spaces are added between dashes and text for lists.
+- The alternative syntax for code blocks, which is 4 empty spaces or a tab, is used instead of 3 back ticks.
+
+
+Internal Structure
+------------------
+This section is focused on identifying the pattern of the internal structure of Pandoc. A test Markdown document is created to reveal the underlying rules of the internal structure.
+
+Here is the code structure of `example2.md`:
+- The equal signs and dashes (mark up syntax for headers) are deliberately set to be shorter than the actual text (`Header 1` and `Header 2`) to see if thse symbols are extended to match the length of the text.
+- The original line of text used in `example.md` is "pasted" together to be a single string. This is to check if Pandoc will break a long single string of text.
+- A word consisting of 45 characters is chosen to be repeated in different ways to see the maximum character width threshold.
+- A list is created with a varying number of empty spaces between a dash and text.
+
+```
+Header 1
+=====
+
+Header 2
+--
+
+ThisisanRMarkdowndocument.Markdownisasimpleformattingsyntaxforauthoringwebpages.ThisisanRMarkdowndocument.Markdownisasimpleformattingsyntaxforauthoringwebpages.
+
+Supercalifragilisticexpialidocious, Supercalifragilisticexpialidocious, Supercalifragilisticexpialidocious, Supercalifragilisticexpialidocious.
+
+Supercalifragilisticexpialidocious., Supercalifragilisticexpialidocious., Supercalifragilisticexpialidocious., Supercalifragilisticexpialidocious..
+
+Supercalifragilisticexpialidocious.., Supercalifragilisticexpialidocious.., Supercalifragilisticexpialidocious.., Supercalifragilisticexpialidocious...
+
+- Item 1
+-  Item 2
+-   Item 3
+-    Item 4
+```
+
+And the structure of the inverted document, `example2-return.md` can be seen below:
+```
+Header 1
+========
+
+Header 2
+--------
+
+ThisisanRMarkdowndocument.Markdownisasimpleformattingsyntaxforauthoringwebpages.ThisisanRMarkdowndocument.Markdownisasimpleformattingsyntaxforauthoringwebpages.
+
+Supercalifragilisticexpialidocious, Supercalifragilisticexpialidocious,
+Supercalifragilisticexpialidocious, Supercalifragilisticexpialidocious.
+
+Supercalifragilisticexpialidocious.,
+Supercalifragilisticexpialidocious.,
+Supercalifragilisticexpialidocious.,
+Supercalifragilisticexpialidocious..
+
+Supercalifragilisticexpialidocious..,
+Supercalifragilisticexpialidocious..,
+Supercalifragilisticexpialidocious..,
+Supercalifragilisticexpialidocious...
+
+-   Item 1
+-   Item 2
+-   Item 3
+-   Item 4
+```
+
+From this, we can conclude that Pandoc has an internally defined set of structure that:
+- matches the length of symbols used as the header syntax (i.e. dashes and equal signs) with the length of the text for header
+- the maximum character width threshold is 73
+    - a single string of character width greater than 73 is not broken but left as is
+    - each line is text-wrapped on 73 character width (i.e. a word that is over the limit isn't broken into pieces but rather carried onto the next line)
+- there are always 3 empty spaces between a dash and text in lists.
+
 
 Conclusion
 ----------
-It is evident from the experiment that Pandoc does not support the concept of invertible, reproducible document generation. For invertibility a source document must be identical to the new source document after inversion, or at least to the extent where `diff` can be used reliably. Pandoc fails to deliver the invertibility concept that is essential to the invertible reproducibility and therefore deviates from my project. Pandoc achieves conversion between various document formats which is to say that it is much more generalised. However it cannot be implemented as an alternative workflow for the invertible reproducible document generation.
+It is evident that Pandoc does not support the concept of invertible document generation. To satisfy the invertibility condition, a source document must be identical to the new source document after inversion, or at least to the extent where `diff` can be used reliably. Pandoc fails to deliver the invertibility concept that is essential to the invertible reproducibility and therefore deviates from our project.
 
+However there is an extremely high possibility that a workflow similar to our suggested workflow using **knitr* can work for Pandoc. The idea is that a Markdown document can be prepared to meet Pandoc's internal structure prior to any conversion. Then the prepared document (that meets the internal structure formatting) is converted and inverted by Pandoc to result in two identical source documents. It is difficult to determine whether this workflow idea for Pandoc can integrate editing and annotating of the documents.
 
