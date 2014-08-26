@@ -47,7 +47,8 @@ A simple Markdown document from http://rmarkdown.rstudio.com/ is used as an exam
 
 We can use the below R code in the command line syntax to correctly generate the document `example.return.md`.
 ```{r}
-system("pandoc -o example.return.md example.md")
+system("pandoc -o example.html example.md")
+system("pandoc -o example.return.md example.html")
 ```
 
 The code structure of `example-return.md` can be seen below:
@@ -78,17 +79,17 @@ You can write `in-line` code with a back-tick.
 The source documents, `example.md` and `example-return.md`, have reasonably similar code structures. We can see some white spaces added during the inversion (such as `- Item 1` and `-   Item 1`) which can be easily ignored by using the option, `-b`, in using `diff` command to ignore changes in the amount of white spaces.
 
 More serious problems are the deleted dashes for the headings, which seem primarily to match the length of the text for the heading (for tidiness), and the use of the alternative syntax to display code blocks (` ``` ` becomes 4 empty spaces or a tab). In addition, Pandoc seems to cut lines based on certain text width, that looks about 75 characters. Both problems will result as distinct differences detected by `diff`.
-```{r}
+```{r, warning=FALSE}
 cat(system("diff -b example.md example-return.md", intern=TRUE), sep="\n")
 ```
 
 These differences result from the fact that Pandoc relies on the internally defined structure. The inversion from `example.html` to `example-return.md` by Pandoc is carried out using only the information provided by the structure of `example.html`. Pandoc has no way of considering the structure of the orignal source document, `example.md`, in generating `example-return.md`. If Pandoc does rely on the internal structure that is set to be obeyed, every time a document is converted into a different format and inverted back to the source format the final source document must have a consistent structure that follows the internally set rule. And the final source document must produce an identical document after another conversion process.
 
 Hence, `example-return.md` is converted to `example-return.html` and inverted back to `example-final.md` to see if `example-return.md` and `example-final.md` are identical:
-```{r}
+```{r, warning=FALSE}
 system("pandoc -o example-return.html example-return.md")
 system("pandoc -o example-final.md example-return.html")
-system("diff example-return.md example-final.md")
+cat(system("diff example-return.md example-final.md", intern=TRUE), sep="\n")
 ```
 
 The two documents are indeed identical to suggest that Pandoc has an internally defined structure that is obeyed during document generation. From the structure of `example-return.md`, a few speculations of the rules that the internal structure is based on can be made:
