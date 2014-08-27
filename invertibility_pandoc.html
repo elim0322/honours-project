@@ -87,7 +87,8 @@ with fixed-width font
 
 &gt; Blockquotes are offset</code></pre>
 <p>We can use the below R code in the command line syntax to correctly generate the document <code>example.return.md</code>.</p>
-<pre class="r"><code>R&gt; system(&quot;pandoc -o example.return.md example.md&quot;)</code></pre>
+<pre class="r"><code>R&gt; system(&quot;pandoc -o example.html example.md&quot;)
+R&gt; system(&quot;pandoc -o example.return.md example.html&quot;)</code></pre>
 <p>The code structure of <code>example-return.md</code> can be seen below:</p>
 <pre><code>Header 1
 --------
@@ -113,8 +114,6 @@ You can write `in-line` code with a back-tick.
 <p>The source documents, <code>example.md</code> and <code>example-return.md</code>, have reasonably similar code structures. We can see some white spaces added during the inversion (such as <code>- Item 1</code> and <code>-   Item 1</code>) which can be easily ignored by using the option, <code>-b</code>, in using <code>diff</code> command to ignore changes in the amount of white spaces.</p>
 <p>More serious problems are the deleted dashes for the headings, which seem primarily to match the length of the text for the heading (for tidiness), and the use of the alternative syntax to display code blocks (<code>```</code> becomes 4 empty spaces or a tab). In addition, Pandoc seems to cut lines based on certain text width, that looks about 75 characters. Both problems will result as distinct differences detected by <code>diff</code>.</p>
 <pre class="r"><code>R&gt; cat(system(&quot;diff -b example.md example-return.md&quot;, intern=TRUE), sep=&quot;\n&quot;)</code></pre>
-<pre><code>Warning: running command 'diff -b example.md example-return.md' had status
-1</code></pre>
 <pre><code>2,4c2
 &lt; -------------------------------------------------
 &lt; This is an R Markdown document. Markdown is a
@@ -144,7 +143,7 @@ You can write `in-line` code with a back-tick.
 <p>Hence, <code>example-return.md</code> is converted to <code>example-return.html</code> and inverted back to <code>example-final.md</code> to see if <code>example-return.md</code> and <code>example-final.md</code> are identical:</p>
 <pre class="r"><code>R&gt; system(&quot;pandoc -o example-return.html example-return.md&quot;)
 R&gt; system(&quot;pandoc -o example-final.md example-return.html&quot;)
-R&gt; system(&quot;diff example-return.md example-final.md&quot;)</code></pre>
+R&gt; cat(system(&quot;diff example-return.md example-final.md&quot;, intern=TRUE), sep=&quot;\n&quot;)</code></pre>
 <p>The two documents are indeed identical to suggest that Pandoc has an internally defined structure that is obeyed during document generation. From the structure of <code>example-return.md</code>, a few speculations of the rules that the internal structure is based on can be made: - The header syntax, dashes and equal signs, are presumably extended or shortened to match the length of the actual text for the header. - There is a set maximum character width on which Pandoc decides to cut lines of text. - Two extra empty spaces are added between dashes and text for lists. - The alternative syntax for code blocks, which is 4 empty spaces or a tab, is used instead of 3 back ticks.</p>
 </div>
 <div id="internal-structure" class="section level2">
