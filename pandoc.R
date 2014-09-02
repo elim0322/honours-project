@@ -46,11 +46,12 @@ system("pandoc -f html -t markdown -o example3.std.Rmd example3.html")
 #  once they are HTML comments they are not affected.
 #  (maybe better to change specific types of R chunks to improve speed..)
 
-# this is sew0() to preserve the metadata information..
+# this is sew0() to protect the metadata information..
 # Rmd -> pre.Rmd
 src <- readLines("example3.Rmd")
-metadata <- grep("---", src) # metadata syntax is "---"
+metadata <- grep("^---$", src) # metadata syntax is "---"
 # there can be only one metadata chunk per document
+if (length(metadata)!=2) stop("more than one pair of metadata syntax!")
 src[metadata[1]] <- gsub("---", "<!-- metadata", src[metadata[1]])
 src[metadata[2]] <- gsub("---", "metadata -->", src[metadata[2]])
 
@@ -65,40 +66,40 @@ for (i in 1:length(chunksStart)) {
 #which.chunks <- chunksEnd2-chunksStart>2
 chunks <- mapply(FUN=seq, chunksStart, chunksEnd2, SIMPLIFY=FALSE)
 for (i in chunks) {
-    src[i][1] <- gsub("```+", "<!--Rchunks.begin", src[i][1])
+    src[i][1] <- gsub("```+", "<!--begin.rcode", src[i][1])
     last <- length(i)
-    src[i][last] <- gsub("```+", "Rchunks.end-->", src[i][last])
+    src[i][last] <- gsub("```+", "end.rcode-->", src[i][last])
 }
+# inline chunks
+src <- gsub("(`)r( +[^`]+\\s*)(`)", "<!--rinline\\2-->", src)
 writeLines(src, "example3.pre.Rmd")
+
 
 #------------------------------------
 # pre.Rmd -> std.Rmd
 system("pandoc -f markdown -t markdown -o example3.std.Rmd example3.pre.Rmd")
 #------------------------------------
 
-# sew1: std.Rmd -> post.Rmd
+
+# sew: std.Rmd -> post.Rmd
 src <- readLines("example3.std.Rmd")
 # gsub R chunks and metadata chunks.
-src <- gsub("<!--Rchunks.begin", "```", src)
-src <- gsub("Rchunks.end-->", "```", src)
+src <- gsub("<!--begin.rcode", "```", src)
+src <- gsub("end.rcode-->", "```", src)
 src <- gsub("<!-- metadata", "---", src)
 src <- gsub("metadata -->", "---", src)
+src <- gsub("(<!--rinline)(.+)(-->)", "`r\\2`", src)
 writeLines(src, "example3.post.Rmd")
 
 #------------------------------------
 # post.Rmd -> post.html
 library(knitr)
-rmarkdown::render("example3.post.Rmd")
+rmarkdown::render("pandoc_tests/example3.post.Rmd")
 #------------------------------------
 
 #  <div>
 #  <pre class="r"><code> ...R code... </code></pre>
 #  <pre><code> </code></pre>
 #  </div>
-
-
-
-
-
 
 
