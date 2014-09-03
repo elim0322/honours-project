@@ -1,6 +1,6 @@
 library(XML)
-library(httr)
 library(RCurl)
+# library(httr)
 
 snap <- function(infile = NULL, outfile = NULL) {
     if (is.null(infile)) {
@@ -14,8 +14,9 @@ snap <- function(infile = NULL, outfile = NULL) {
     ####################### Add 'contenteditable="true"' ######################
     html <- htmlParse(infile)
     # Select all the child nodes of the body element (i.e. all top level
-    #  elements inside body tags) that do not have "class='chunk'" attributes.
-    node <- getNodeSet(html, '//body/*[not(@class="chunk")]')
+    #  elements inside body tags) that do not have "class='chunk'" attributes
+    #  or 'type="text/css"' attributes that knitr adds.
+    node <- getNodeSet(html, '//body/*[not(@type="text/css")][not(@class="chunk")]')
     
     for (i in 1:length(node)) {
         tag.lines <- getLineNumber(node[[i]])
