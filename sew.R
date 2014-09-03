@@ -20,9 +20,9 @@ processRinline <- function(line) {
 sew <- function(infile = NULL, outfile = NULL) {
     if (is.null(infile)) {
         infile <- load.dir()
-    } 
-    if (!grepl("Rhtml$", infile))
-        stop("infile is not an Rhtml file")
+    }
+    if (!grepl("Rhtml$", infile) & !grepl("std.Rmd$", infile))
+        stop("infile must be an Rhtml or std.Rmd file")
     src <- readLines(infile)
     
     ########################## inline R code chunks ###########################
@@ -53,9 +53,22 @@ sew <- function(infile = NULL, outfile = NULL) {
         src <- append(src, keep.list[[i]], after = R.end[i])
     }
     
+    #----- for std.Rmd files -----#
+    if (grepl("std.Rmd$", infile)) {
+        # replace Rhtml syntax with Rmd syntax
+        src <- gsub("<!--begin.rcode", "```", src)
+        src <- gsub("end.rcode-->", "```", src)
+        src <- gsub("<!-- metadata", "---", src)
+        src <- gsub("metadata -->", "---", src)
+        src <- gsub("(<!--rinline)(.+)(-->+?)", "`r\\2`", src)
+    }
+    
     if (is.null(outfile)) {
-        outfile <- gsub("Rhtml$", "post.Rhtml", infile)
+        if (grepl("Rhtml$", infile)) {
+            outfile <- gsub("Rhtml$", "post.Rhtml", infile)
+        } else {
+            outfile <- gsub("std.Rmd$", "post.Rmd", infile)
+        }    
     }
     writeLines(src, outfile)
-    
 }
