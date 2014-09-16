@@ -29,8 +29,8 @@ protect <- function(infile=NULL, outfile=NULL) {
     # chunk.end lines will be: ```end.rmd_keepcode-->
     begin.regexpr <- paste0("(", all_patterns$md$chunk.begin, ")")
     end.regexpr <- paste0("(", all_patterns$md$chunk.end, ")")
-    src <- gsub(begin.regexpr, "<!--begin.rmd_keepcode\\1", src)
-    src <- gsub(end.regexpr, "\\1end.rmd_keepcode-->", src)
+    src <- gsub(begin.regexpr, "<!--begin.keepcode\\1", src)
+    src <- gsub(end.regexpr, "\\1end.keepcode-->", src)
     
     #----------------------------- Write pre.Rmd -----------------------------#
     if (is.null(outfile)) {

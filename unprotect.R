@@ -15,8 +15,8 @@ unprotect <- function(infile=NULL, outfile=NULL) {
     src <- readLines(infile)
     
     #------------ Revert protected R chunks ------------#
-    src <- gsub("<!--begin.rmd_keepcode", "", src)
-    src <- gsub("end.rmd_keepcode-->", "", src)
+    src <- gsub("<!--begin.keepcode", "", src)
+    src <- gsub("end.keepcode-->", "", src)
     
     #-------------- Revert metadata chunks -------------#
     src <- gsub("<!--rmd_metadata", "---", src)

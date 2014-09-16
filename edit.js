@@ -8,10 +8,18 @@
     <!-- activate annotator.js on <div class="chunk"> elements -->
     <script>
     jQuery(function ($) {
-        $('div.chunk').annotator().annotator("addPlugin", "Offline");
+        if (($('div.chunk')).length == 0) {
+            $('pre').annotator().annotator("addPlugin", "Offline");
+        } else {
+            $('div.chunk').annotator().annotator("addPlugin", "Offline");
+        }
     });
     jQuery(function ($) {
-        $('div.chunk').data('annotator').plugins.Offline.store.clear();
+        if (($('div.chunk')).length == 0) {
+            $('pre').annotator().annotator("addPlugin", "Offline");
+        } else {
+            $('div.chunk').data('annotator').plugins.Offline.store.clear();
+        }
     });
     </script>
     
@@ -38,7 +46,12 @@
          data: { changes: output },
          async: false
       });
-      var annotations = $("div.chunk").data('annotator').plugins.Offline.store.all();
+      // if there is no <div class="chunk">, use <pre> assuming all <pre>s are R chunks.
+      if(annotations.length==0) {
+          var annotations = $("pre").data('annotator').plugins.Offline.store.all();
+      } else {
+          var annotations = $("div.chunk").data('annotator').plugins.Offline.store.all();
+      }
       jQuery.ajax({
          type: "POST",
          url: "save-annotations.php",
