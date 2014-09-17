@@ -16,7 +16,7 @@
     });
     jQuery(function ($) {
         if (($('div.chunk')).length == 0) {
-            $('pre').annotator().annotator("addPlugin", "Offline");
+            $('pre').data('annotator').plugins.Offline.store.clear();
         } else {
             $('div.chunk').data('annotator').plugins.Offline.store.clear();
         }
@@ -47,7 +47,7 @@
          async: false
       });
       // if there is no <div class="chunk">, use <pre> assuming all <pre>s are R chunks.
-      if(annotations.length==0) {
+      if (($('div.chunk')).length == 0) {
           var annotations = $("pre").data('annotator').plugins.Offline.store.all();
       } else {
           var annotations = $("div.chunk").data('annotator').plugins.Offline.store.all();
