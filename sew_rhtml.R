@@ -6,7 +6,7 @@ source("choose_file.R")
 # to copy and attach inline chunks.
 source("rinline.R")
 
-# .Rhtml -> post.Rhtml
+# .Rhtml -> post-RHTML.Rhtml
 sew_rhtml <- function(infile=NULL, outfile=NULL) {
     if (is.null(infile)) {
         # <<source("choose_file.R)">>
@@ -18,7 +18,7 @@ sew_rhtml <- function(infile=NULL, outfile=NULL) {
     }
     src <- readLines(infile)
     
-    #------------------------- inline R code chunks --------------------------#
+    ########################## inline R code chunks ###########################
     # Using the official pattern.
     inline <- grep(all_patterns$html$inline.code, src)
     # <<source("rinline.R")>>
@@ -26,7 +26,7 @@ sew_rhtml <- function(infile=NULL, outfile=NULL) {
         src[inline][i] <- processRinline(src[inline][i], format="html")
     }
     
-    #-------------- generate a list of R code chunks to "keep" ---------------#
+    ############### generate a list of R code chunks to "keep" ################
     R.begin <- grep(all_patterns$html$chunk.begin, src)
     R.end <- grep(all_patterns$html$chunk.end, src)
     if (length(R.begin) != length(R.end)) {
@@ -38,10 +38,10 @@ sew_rhtml <- function(infile=NULL, outfile=NULL) {
     
     # Replace "<!--begin.rcode ... -->" with "<!--begin.keepcode ... -->".
     chunk.begin <- gsub("(^\\s*<!--\\s*begin.)(r)(code\\s*.*)",
-                        "\\1rhtml_keep\\3", src[keepMat[1,]])
+                        "\\1keep\\3", src[keepMat[1,]])
     # Replace "end.rcode-->" with "end.keepcode-->".
     last <- keepMat[nrow(keepMat),]
-    chunk.end <- gsub("(^\\s*end.)(r)(code\\s*-->.*$)", "\\1rhtml_keep\\3", src[last])
+    chunk.end <- gsub("(^\\s*end.)(r)(code\\s*-->.*$)","\\1keep\\3",src[last])
     
     keep.list <- vector(mode="list", length=ncol(keepMat))
     for (i in 1:length(keep.list)) {
@@ -51,13 +51,14 @@ sew_rhtml <- function(infile=NULL, outfile=NULL) {
         keep.list[[i]][l] <- chunk.end[i]
     }
     
-    #--------------------------- write post.Rhtml ----------------------------#
+    ######################### write post-RHTML.Rhtml ##########################
+    # outfile is .post-RHTML.Rmd to keep track of the initial source doc format
+    # Both knit() and rmarkdown::render() will produce post.html for confusion.
     for (i in length(R.end):1) {
         src <- append(src, keep.list[[i]], after=last[i])
     }
-    
     if (is.null(outfile)) {
-        outfile <- gsub("[Rr]html$", "post-html.Rhtml", infile)
+        outfile <- gsub("[Rr]html", "post-RHTML.Rhtml", infile)
     }
     writeLines(src, outfile)
 }
