@@ -13,6 +13,13 @@ unprotect <- function(infile=NULL, outfile=NULL) {
         stop("infile must be a std.Rmd file")
     }
     src <- readLines(infile)
+    #----------------- Remove rmLines ------------------#
+    # grep all "rmd-rmLines" and remove the ones that are
+    # after the end lines of chunks (end.keepcode-->).
+    allRmLines <- grep("^rmd-rmLines$", src)
+    endLines <- grep("^.+-->$", src)
+    rmLines <- allRmLines[which(allRmLines==endLines+1)]
+    src <- src[-rmLines]
     
     #------------ Revert protected R chunks ------------#
     src <- gsub("<!--begin.keepcode", "", src)

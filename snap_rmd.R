@@ -85,15 +85,17 @@ snap_rmd <- function(infile = NULL, outfile = NULL) {
     saver <- readLines("button.html")
     
     #------------------------ Generate pieces of src -------------------------#
-    # Only one head tag per html document
-    headLines <- grep("<head>", src)
+    # NOTE: There are other scripts that interfere with our edit.js.
+    #       A solution is to add our scripts the last.
+    # Search for the closing tag </head>.
+    headLines <- grep("</head>", src)
     # Only one body tag per html document
     bodyLines <- grep("<body.*>", src)
     
-    # 1st component: start to "<head>"
-    # 2nd component: <head>+1 line to "<body>"
+    # 1st component: start to "</head>"-1
+    # 2nd component: </head> line to "<body>"
     # 3rd component: "<body>"+1 line to the end
-    srcPieces <- list(src[1:headLines], src[(headLines + 1):bodyLines],
+    srcPieces <- list(src[1:headLines-1], src[(headLines):bodyLines],
                       src[(bodyLines + 1):length(src)])
     
     #-------------------------- Write edit-RMD.html --------------------------#

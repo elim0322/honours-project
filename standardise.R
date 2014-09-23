@@ -19,6 +19,6 @@ standardise <- function(infile=NULL, outfile=NULL) {
     }
     
     # Create appropriate command line
-    cmd <- paste("pandoc -f markdown -t markdown -o", outfile, infile)
+    cmd <- paste("pandoc -f markdown -t markdown --no-wrap -o", outfile, infile)
     system(cmd)
 }
