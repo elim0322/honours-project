@@ -7,6 +7,7 @@ source("choose_file.R")
 source("rinline.R")
 
 # .Rhtml -> post-RHTML.Rhtml
+# To copy R chunks which are lost when processed by knit().
 sew_rhtml <- function(infile=NULL, outfile=NULL) {
     if (is.null(infile)) {
         # <<source("choose_file.R)">>
@@ -18,15 +19,18 @@ sew_rhtml <- function(infile=NULL, outfile=NULL) {
     }
     src <- readLines(infile)
     
+    ###########################################################################
     ########################## inline R code chunks ###########################
+    ###########################################################################
     # Using the official pattern.
     inline <- grep(all_patterns$html$inline.code, src)
-    # <<source("rinline.R")>>
     for (i in 1:length(inline)) {
         src[inline][i] <- processRinline(src[inline][i], format="html")
     }
     
+    ###########################################################################
     ############### generate a list of R code chunks to "keep" ################
+    ###########################################################################
     R.begin <- grep(all_patterns$html$chunk.begin, src)
     R.end <- grep(all_patterns$html$chunk.end, src)
     if (length(R.begin) != length(R.end)) {
@@ -43,6 +47,7 @@ sew_rhtml <- function(infile=NULL, outfile=NULL) {
     last <- keepMat[nrow(keepMat),]
     chunk.end <- gsub("(^\\s*end.)(r)(code\\s*-->.*$)","\\1keep\\3",src[last])
     
+    # Generate a list of copied lines to keep.
     keep.list <- vector(mode="list", length=ncol(keepMat))
     for (i in 1:length(keep.list)) {
         keep.list[[i]] <- src[keepMat[,i]]
@@ -51,9 +56,12 @@ sew_rhtml <- function(infile=NULL, outfile=NULL) {
         keep.list[[i]][l] <- chunk.end[i]
     }
     
+    ###########################################################################
     ######################### write post-RHTML.Rhtml ##########################
-    # outfile is .post-RHTML.Rmd to keep track of the initial source doc format
-    # Both knit() and rmarkdown::render() will produce post.html for confusion.
+    ###########################################################################
+    # Outfile has the suffix, ".post-RHTML.Rmd", to keep track of the initial
+    # source doc format as both knit() and rmarkdown::render() will produce 
+    # .post.html for confusion.
     for (i in length(R.end):1) {
         src <- append(src, keep.list[[i]], after=last[i])
     }

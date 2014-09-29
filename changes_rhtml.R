@@ -4,7 +4,8 @@ library(RCurl)
 # executes file.choose() and setwd() when infile is not specified.
 source("choose_file.R")
 
-# .anns-RHTML.html -> save-RHTML.html
+# anns-RHTML.html -> save-RHTML.html
+# To merge changes made.
 changes_rhtml <- function(infile = NULL, outfile = NULL, changefile = NULL) {
     if (is.null(infile)) {
         # <<source("choose_file.R)">>
@@ -16,6 +17,9 @@ changes_rhtml <- function(infile = NULL, outfile = NULL, changefile = NULL) {
     }
     src <- readLines(infile)
     
+    ###########################################################################
+    ################ Fetch "test-changes.txt" from the server #################
+    ###########################################################################
     if (is.null(changefile)) {
         editor <- getURL(paste0("http://stat220.stat.auckland.ac.nz/cke/",
                                 "test-changes.txt"), userpwd="cke:cke")
@@ -26,33 +30,34 @@ changes_rhtml <- function(infile = NULL, outfile = NULL, changefile = NULL) {
         editor <- readLines(changefile)
     }
     
+    ###########################################################################
     ############################### Editor bits ###############################
-    # editor.start: start lines of "editor" chunks in editor
-    # editor.end : end lines of "editor" chunks in editor
+    ###########################################################################
+    # Start lines of each chunk of changes in editor.
     editor.start <- grep("^EDITOR\\s.+", editor)
     
+    # Generate end lines of each chunk of changes in editor.
     # -1 because each end line is a line before the next start line.
     editor.end <- editor.start - 1
-    # ...except the first one (because start[1]-1 is meaningless)
-    editor.end <- editor.end[-1]
+    editor.end <- editor.end[-1]  # begin.start[1]-1 is meaningless
     # The last end line has to be manually combined into editor.end.
     editor.end <- c(editor.end, length(editor))
     
-    # Each element in this list represents the lines corresponding to
-    # each "editor" chunk (separated each chunk into each element of the list).
+    # A list of sequences of lines for each chunk of changes.
     editor.chunks <- mapply(seq, editor.start, editor.end-1, SIMPLIFY = FALSE)
-    # Which of the "editor..." lines contain "NOT MODIFIED"?
-    # Return a number to indicate which editor chunk is modified.
+    
+    # Find chunks that are not modified.
     which.chunks <- grep("NOT MODIFIED", editor[editor.start])
     
+    ###########################################################################
     ############################## source bits ################################
+    ###########################################################################
     ##### Generate appropriate closing tags
-    # Only keep "<tag " and delete all attributes, etc. (can't find a way to 
-    #  just select "<tag" without the empty space). This will produce "<tag ".
+    # Find the lines with contenteditable="true", remove all attributes except
+    # "<tag ", and then generate matching closing tags.
     src.start <- grep('contenteditable=\"true\"', src)
     endTags <- gsub("(^.*<)(.+?)\\s.+$", "\\1/\\2>", src[src.start])
-    # Get rid of any white spaces before and in front of the end tags.
-    endTags <- gsub("\\s*", "", endTags)
+    endTags <- gsub("\\s*", "", endTags)  # Remove white spaces
     
     ##### Generate src.end
     html <- htmlParse(infile)
@@ -60,42 +65,35 @@ changes_rhtml <- function(infile = NULL, outfile = NULL, changefile = NULL) {
     for (i in 1:length(src.start)) {
         # Get all top level nodes except save button and submit button.
         # We should not skip <div class="chunk"> nodes (because closing tags
-        #  can be just before those <div> nodes).
+        # can be just before those <div> nodes).
         node <- getNodeSet(html, '//body/*[not(@id="savebutton")
                                   and not(@id="submitbutton")]')
         # Get line numbers of those top level nodes
         nxt <- sapply(node, getLineNumber)
         # Subset those greater or equal to src.start as closing tags can be in
-        #  one line with opening tags
-        nxtn <- nxt[nxt >= src.start[i]]
+        # one line with opening tags
+        nxtn <- nxt[src.start[i] <= nxt]
         
-        # Search for closing tags
+        # nxtn can either be length of 1 (when it's the last element)
+        # or more than one.
         if (length(nxtn) == 1) {
             # For last elements. There can be no more element 
-            #  after it so nxtn has only one element.
+            # after it so nxtn has only one element.
             index <- grep(endTags[i], src[nxtn:length(src)])
             nxtnLines <- seq(nxtn, length(src))
             src.end[i] <- nxtnLines[index]
         } else {
-            # If nxtn finds many other elements after the starting tag,
-            #  just choose the first (in case for the closing tag in the same
-            #  line) and second (starting line of the next node).
+            # If nxtn finds many other elements after the starting tag, just
+            # choose the first (in case for the closing tag in the same line)
+            # and second (starting line of the next node).
             nxtn2 <- nxtn[c(1,2)]
             nxtnLines <- seq(nxtn2[1], nxtn2[2])
             index <- grep(endTags[i], src[nxtnLines])
-            if (grepl("^.*</div>.*$", endTags[i])) {
-                # Because <div> elements can be nested, search for the last 
-                # (max) </div>.
-                src.end[i] <- max(nxtnLines[index])
-            } else {
-                # If endTags[i] is not a </div>, choose the minimum so the next
-                # end tag is not chosen.
-                src.end[i] <- min(nxtnLines[index])
-            }
+            src.end[i] <- max(nxtnLines[index])  # max() for nested </div>s.
         }
     }
+    
     ##### Generate a list of sequence from src.start to src.end.
-    # Each element of the list is a chunk.
     src.chunks <- mapply(FUN = seq, src.start, src.end, SIMPLIFY = FALSE)
     
     ##### Find which src lines are actually to be edited.
@@ -104,6 +102,7 @@ changes_rhtml <- function(infile = NULL, outfile = NULL, changefile = NULL) {
         for (i in 1:length(which.chunks)) {
             # Find the "id" of "NOT MODIFIED" editor chunks
             notEditedLines <- unlist(editor.chunks[which.chunks[i]])
+            
             # Remove some strings to get the right id (i.e. "Editor-##").
             notEditedId <- gsub("^EDITOR\\s(.+)\\sNOT MODIFIED$", "\\1",
                                 editor[notEditedLines][1])
@@ -113,38 +112,41 @@ changes_rhtml <- function(infile = NULL, outfile = NULL, changefile = NULL) {
                                      function(x) {
                                          grepl(notEditedId, src[x[1]])
                                      })
+            
             # "notEditedIndex" is a logical vector, TRUE for the correct match
             #  so we want to subset for the FALSE ones.
             src.chunks <- src.chunks[!(notEditedIndex)]
         }
     }
     
+    ###########################################################################
     #################### Replace old lines with new lines #####################
+    ###########################################################################
     ##### Get rid of "NOT MODIFIED" lines.
     if (length(which.chunks) > 0) {
         editor.chunks <- editor.chunks[-which.chunks]
     }
     
-    ##### Check if the lengths are equal.
+    ##### Check if the lengths of source and editor bits are equal.
     if (length(editor.chunks) != length(src.chunks)) {
         stop("Number of new content does not equal number of old content")
     }
     
-    ##### Remove everything except <tag ...>
-    # ASSUMES only whitespace in front of <tag>
-    new.src <- vector("numeric", length = length(src.start))
-    
+    ##### Generate beginning tags for edited chunks.
+    # Remove everything except <tag ...>, assuming only whitespace in front of
+    # <tag> (assumes no text in front of <tag>).
+    open.tag <- vector("numeric", length = length(src.start))
     for (i in 1:length(src.start)) {
-        # Match for first "<" and ">" (i.e. opening tags), and
-        #  remove the rest.
-        new.src[i] <- gsub("(.*?<.+?>).+$", "\\1", src[src.start[i]])
+        open.tag[i] <- gsub("(.*?<.+?>).+$", "\\1", src[src.start[i]])
     }
+    # If there are edited chunks, extract the id attributes of "NOT MODIFIED"
+    # chunk of changes in "editor", and remove opening tags matching the 
+    # unedited chunks.
     if (length(which.chunks) > 0) {
-        # This is a vector of ids (eg, Editor-1, Editor-2, ...)
         NotEditedIds <- gsub("(^EDITOR )(.+)( NOT MODIFIED$)", "\\2",
                              editor[editor.start[which.chunks]])
         for (i in 1:length(NotEditedIds)) {
-            new.src <- new.src[-grep(NotEditedIds[i], new.src)]
+            open.tag <- open.tag[-grep(NotEditedIds[i], open.tag)]
         }
     }
     
@@ -165,14 +167,14 @@ changes_rhtml <- function(infile = NULL, outfile = NULL, changefile = NULL) {
         
         newLines <- unlist(editor.chunks[index])
         firstOldLine <- src.chunks[[i]][1]
-        end.tag <- gsub("(^.*<)(.+?)\\s.+$", "\\1/\\2>", new.src[i])
+        end.tag <- gsub("(^.*<)(.+?)\\s.+$", "\\1/\\2>", open.tag[i])
         
         # Rip out old lines and append new lines in the old place
         src <- append(src[-oldLines],
                       # Subset: get rid of the first lines in editor
                       #  (e.g. EDITOR Editor-1) AND the last lines which
                       #  are just empty spaces.
-                      c(new.src[i], editor[newLines[-1]], end.tag),
+                      c(open.tag[i], editor[newLines[-1]], end.tag),
                       firstOldLine - 1)
     }
     

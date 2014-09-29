@@ -3,6 +3,7 @@
 source("choose_file.R")
 
 # save-RHTML.html -> return.Rhtml
+# To rip out the contents added by knitr.
 rip_rhtml <- function(infile = NULL, outfile = NULL) {
     if (is.null(infile)) {
         # <<source("choose_file.R)">>
@@ -14,7 +15,9 @@ rip_rhtml <- function(infile = NULL, outfile = NULL) {
     }
     src <- readLines(infile)
     
+    ###########################################################################
     ############################## Remove style ###############################
+    ###########################################################################
     # We assume that ONLY knitr has written .knitr.inline within a <style>
     # ".knitr.inline {" string seems to be always after 
     # "<style type=\"text/css\">" string.
@@ -29,7 +32,9 @@ rip_rhtml <- function(infile = NULL, outfile = NULL) {
         src <- src[-c(start:end)]
     }
     
-    ################ Remove "<div class=..." strings ################
+    ###########################################################################
+    ##################### Remove "<div class=..." strings #####################
+    ###########################################################################
     # We assume that ONLY knitr has written <div class="chunk"
     chunks.begin <- grep('^<div class=\"chunk\" id=\".*$', src)
     # We assume that ONLY knitr has written </div></div> on a line
@@ -43,17 +48,22 @@ rip_rhtml <- function(infile = NULL, outfile = NULL) {
     lines <- mapply(seq, chunks.begin, chunks.end)
     src <- src[-unlist(lines)]
     
+    ###########################################################################
     ########################### Remove inline codes ###########################
+    ###########################################################################
     inline <- grep('<code class=\"knitr inline\">', src)
     src[inline] <- gsub('<code class=\"knitr inline"(.+?)</code>', 
                         "", src[inline])
     
+    ###########################################################################
     ########################### Replace all "keep"s ###########################
-    
+    ###########################################################################
     src <- gsub("(.+[.])(keep)(code.*$)", "\\1r\\3", src)
     src <- gsub("<!--keep.rinline", "<!--rinline", src)
     
+    ###########################################################################
     ####################### Remove extra spaces added #########################
+    ###########################################################################
     # An empty space seems to be added before each R chunk
     extra <- grep("<!--begin.rcode", src)-1
     src <- src[-extra]
@@ -68,27 +78,35 @@ rip_rhtml <- function(infile = NULL, outfile = NULL) {
     editJs.end <- editJs.start + length(readLines("edit.js")) - 1
     src <- src[-c(editJs.start:editJs.end)]
     
+    ###########################################################################
     ########################### Remove the buttons ############################
+    ###########################################################################
     # Similarly, search for the starting line of "button.html", then
     #  remove from that line up to the end line
     button.start <- grep("<p id=\"savebutton\" style=\"background-", src)
     button.end <- button.start +  length(readLines("button.html")) - 1
     src <- src[-c(button.start:button.end)]
     
+    ###########################################################################
     ##################### Remove 'contenteditable="true"' #####################
+    ###########################################################################
     srcEditLines <- grep('contenteditable="true"', src)
     # We know that one empty space is in front of 'contenteditable="true"'
     #  from the way snap() adds it.
     src[srcEditLines] <- gsub('(^.*?<.*)\\scontenteditable="true"',
                               "\\1", src[srcEditLines])
     
+    ###########################################################################
     ########################## Remove 'id="Editor-' ###########################
+    ###########################################################################
     srcEditLines <- grep('id=\"Editor-', src)
     src[srcEditLines] <- gsub(' id="Editor-[0-9]+"', "", src[srcEditLines])
     
+    ###########################################################################
     ########################### Write return.Rhtml ############################
+    ###########################################################################
     if (is.null(outfile)) {
         outfile <- gsub("save-RHTML.html","return.Rhtml", infile)
     }
-    write(src, outfile)
+    writeLines(src, outfile)
 }

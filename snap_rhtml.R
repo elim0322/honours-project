@@ -5,6 +5,8 @@ library(RCurl)
 source("choose_file.R")
 
 # post-RHTML.html -> edit-RHTML.html
+# To add JavaScript scripts in edit.js and button.html to prepare the document
+# for uploading on the server.
 snap_rhtml <- function(infile = NULL, outfile = NULL) {
     if (is.null(infile)) {
         # <<source("choose_file.R)">>
@@ -15,35 +17,47 @@ snap_rhtml <- function(infile = NULL, outfile = NULL) {
         stop("infile must be a post-RHTML.html file")
     }
     src <- readLines(infile)
-        
-    ###################### Add 'contenteditable="true"' #######################
-    html <- htmlParse(infile)
-    # Select all the child nodes of the body element (i.e. all top level
-    #  elements inside body tags) that do not have "class='chunk'" attributes
-    #  or 'type="text/css"' attributes that knitr adds.
-    node <- getNodeSet(html, '//body/*[not(@class="chunk")]')
     
+    ###########################################################################
+    ###################### Add 'contenteditable="true"' #######################
+    ###########################################################################
+    html <- htmlParse(infile)
+    
+    # Select all the child nodes of the body element that do not have the 
+    # attribute, "class='chunk'" or 'type="text/css"', that knitr adds.
+    nodes <- getNodeSet(html, '//body/*[not(@class="chunk")]')
+    
+    # Loop over the nodes to sequentially generate and add 'id="Editor-#" 
+    # attributes to the nodes that have no 'id' attributes specified so that
+    # merging changes afterwards is done explicitly for matching nodes.
+    #  NOTE: If R code chunks are named in the source document (.Rhtml), the
+    #  names become the id attributes (eg, id="Name") after knit().
     for (i in 1:length(node)) {
+        # Get the beginning line number of node[[i]].
         tag.lines <- getLineNumber(node[[i]])
+        # Extract id attribute from node[[i]].
         id.attr <- xmlGetAttr(node[[i]], "id")
-        # if there is no id attribute, insert one
-        # otherwise just add contenteditable="true" attr
         attr <- '\\1 contenteditable=\"true\"'
+        
+        # If there are no id attributes, make one and paste it to attr.
         if (is.null(id.attr)) {
-            # Generate id attributes
             editorID <- paste("id=", '\"Editor-', i, '\"', sep="")
             attr <- paste(attr, editorID)
         }
-        # Search for "<tag...>" and replace the first ">" with
-        #  'contenteditable="true"'
+        # Search for "<tag...>" and replace the first ">" (non-greedy) with 
+        # attr with ">".
         src[tag.lines] <- gsub("(^.*?<.*?)>", paste0(attr,'>'), src[tag.lines])
     }
     
+    ###########################################################################
     ################# Load jQuery, ckeditor.js, annotator.js ##################
+    ###########################################################################
     js <- readLines("edit.js")
     saver <- readLines("button.html")
     
+    ###########################################################################
     ######################### Generate pieces of src ##########################
+    ###########################################################################
     # Only one head tag per html document
     headLines <- grep("<head>", src)
     # Only one body tag per html document
@@ -55,7 +69,9 @@ snap_rhtml <- function(infile = NULL, outfile = NULL) {
     srcPieces <- list(src[1:headLines], src[(headLines + 1):bodyLines],
                       src[(bodyLines + 1):length(src)])
     
-    ########################### Write edit-RHTML.html ###########################
+    ###########################################################################
+    ########################## Write edit-RHTML.html ##########################
+    ###########################################################################
     if (is.null(outfile)) {
         outfile <- gsub("post-RHTML.html","edit-RHTML.html", infile)
     }
