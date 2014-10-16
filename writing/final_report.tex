@@ -1,5 +1,6 @@
 \documentclass[a4paper, 12pt]{report}
     \parindent=1em
+    \parskip=1pt
     \usepackage[font=footnotesize, labelfont=bf]{caption}  % bold caption
     %\usepackage[usenames,dvipsnames]{color}  % not compatible with knitr yet..
     \usepackage{xcolor}  % highlighting.
@@ -13,9 +14,11 @@
             captionpos=t,  % sets the caption-position to bottom
             numbers=left,  % line numbers on the left
             frame=single,  % adds a frame around the code
-            fontadjust=true
+            fontadjust=true,
             escapechar=|
-            language=HTML
+            %language=HTML,
+            aboveskip=0pt,
+            belowskip=5pt,
         }
     \usepackage{url}
     \usepackage{tikz}
@@ -142,7 +145,7 @@ This report introduces a possible workflow that can be utilised effectively in t
   \end{tikzpicture}
 \end{figure}
 
-\section{Introduction}
+\section*{Introduction}
 \label{sec:3.1}
 The primary objective of the initial phase is to design and achieve a complete reproducible, invertible workflow. There are many obstacles that limit the possibility of devising an invertible workflow. A sizable one of these problems is that converting (or inverting) between two different document formats requires a tremendous amount of a particular resource that we were limited on; \emph{time}.
 
@@ -233,7 +236,7 @@ Figure \ref{fig:2.1} shows what \texttt{example1.html} will look like in a web b
 %--------------------------------- Overview -----------------------------------
 %------------------------------------------------------------------------------
 \pagebreak
-\section{Overview}
+\section*{Overview}
 \label{sec:overview}
 
 A complete cycle of the invertible workflow consists of six stages. Each stage is involved primarily with text processing, along with an occasional use of XPath.
@@ -293,48 +296,227 @@ Annotations and changes made on the final document are merged by the functions, 
 The final stage of the invertible workflow involves text processing to remove any artifacts added by \textbf{knitr} and is carried out by the function, \texttt{rip()}.
 
 
-%The flow chart in Figure \ref{fig:4} outlines a series of steps involved in our hypothesised round trip. A brief description for each step is as follows:
-%\begin{enumerate}[i]
-%\item The function \texttt{sew()} is called on the source document (\texttt{.Rhtml}) to generate a \texttt{.post.Rhtml} file.
-%
-%Each R code chunk in the source document is copied with a slight change to preserve each of the original R code chunks. The goal is to compensate for the fact that the original R code is heavily modified by \textbf{knitr} as the final document is generated (refer back to Listing \ref{lst:2.2} as a reminder). We must preserve the original R code so that it can be ``reproduced" or reappear in the new source document generated from the round trip.
-%
-%%------------------
-%\item The \texttt{.post.Rhtml} document is knitted to produce a \texttt{.post.html} document which retains the copies of the original R code chunks.
-%
-%Note that these copies are not displayed as they are hidden inside HTML comment tags while the information of the original R code is retained in the subsequent steps. The copies will not be interfered until the very last step of the round trip.
-%
-%%------------------
-%\item The function \texttt{snap()} is called on the \texttt{.post.html} document to produce a \texttt{.edit.html} document.
-%
-%The main task carried out by \texttt{snap()} is to append a few supplementary lines of code in the \texttt{.post.html} document to enable the features of text editing and annotating. The sections of the document relating to R such as R code chunks and any output from R are restricted for annotations only while the rest of the document is entirely editable with a few possible exceptions (the reason behind this decision will be discussed in more detail later).
-%
-%Once the output document (\texttt{.edit.html}) is generated (by \texttt{snap()}), it needs to be uploaded onto a server through which editing, annotating and saving the changes made are fully functional. The changes are saved as text files.
-%
-%%------------------
-%\item The saved text file (from the previous step) contains information on any annotations made. The function \texttt{annotations()} can access this information to make appropriate changes on the \texttt{.edit.html} document to produce a \texttt{.anns.html} document.
-%
-%In the output document (\texttt{.anns.html}), a message is inserted at the top of each annotated R code chunk to display \emph{which} text is annotated with \emph{what} annotations by \emph{who}.
-%
-%%------------------
-%\item Similarly to the previous annotations step, any changes made on the \texttt{.edit.html} document are accessed through the saved text file.
-%
-%The old, unwanted lines of text from the input document \texttt{.anns.html} are replaced with the corresponding new lines of text to generate a \texttt{.save.html} document.
-%
-%%------------------
-%\item The function \texttt{rip()} is called on the \texttt{.save.html} document to produce a \texttt{.return.Rhtml} document.
-%
-%The main goal of \texttt{rip()} is to ``reproduce" a new source document with the changes and annotations made the previous steps. It essentially aims to convert the \texttt{.save.html} document to match the format of the source document (\texttt{.Rhtml}). Any additional lines of code inserted during the round trip and the lines added by \textbf{knitr} (such as the lines of code for the style defined by \textbf{knitr}) are removed as the main algorithm for the reproducibility.
-%
-%\end{enumerate}
-%
-%Important assumptions and more detailed discussion of these functions involved in the round trip will be introduced in Section %\ref{sec:functions}.
 
-% %------------------------------------------------------------------------------
-% % Functions
-% %------------------------------------------------------------------------------
-% \section{Functions}
-% \label{sec:functions}
+%-------------------------------------------------------------------------------
+%------------------------------ Functions detail -------------------------------
+%-------------------------------------------------------------------------------
+\pagebreak
+\section*{Functions detail}
+\subsubsection*{\texttt{sew()}}
+The function carries out a pre-processing step, where R Code Chunks are copied. The copied R Code Chunks are delimited by \texttt{<!--begin.keepcode} and \texttt{end.keepcode-->} markup, and each copy is added \emph{after} its original counterpart, correspondingly.
+
+A simple example of a copied R Code Chunk is as below:
+\begin{lstlisting}[numbers=none, frame=none, escapechar=\|]
+<!--begin.rcode echo=FALSE
+summary(cars)
+end.rcode-->
+|\hl{c}{<!--begin.keepcode echo=FALSE}|
+|\hl{c}{summary(cars)}|
+|\hl{c}{end.keepcode-->}|  
+\end{lstlisting}
+
+Inline R Code Chunks are delimited differently, by \texttt{<!--rinline.keep} and \texttt{-->} markup to differentiate them from the ordinary R Code Chunks.
+
+The default suffix of the output file is \texttt{.post.Rhtml}, converted from the source suffix, \texttt{.Rhtml}.
+
+%------------------------------------------------------------------------------
+\subsubsection*{\texttt{knit()}}
+The function is directly from the package, \textbf{knitr}, and carries out the usual knitting procedure. It should be noted that the copies of R Code Chunks generated from the previous step are \emph{not} processed by \texttt{knit()}, and thus remain hidden in the subsequent steps.
+
+The default suffix of the output file is \texttt{.html}, converted from the input suffix, \texttt{.Rhtml}.
+
+%------------------------------------------------------------------------------
+\subsubsection*{\texttt{snap()}}
+The function is primarily involved with adding pieces of code to the (knitted) HTML document; it adds a piece of JavaScript code along with a piece of HTML script to the document and HTML attributes to the appropriate elements of the HTML document.
+
+The JavaScript code contains \texttt{scripts} for loading the libraries, \textbf{CKEditor} and \textbf{Annotator}, responsible for providing the editable and annotatable GUIs, and \textbf{jQuery} (REF), on which the functionality of the former two libraries depends. The HTML script contains the layout of the save \texttt{button}.
+
+The attributes, \texttt{contenteditable="true"} and \texttt{id="Editor"}, are added to each element in the document that should be editable, that is, any top level element that is \emph{not} a \texttt{div} element with \texttt{class="chunk"} attribute. \textbf{CKEditor} detects elements with \texttt{contenteditable="true"} attribute and provides the editable GUI for \emph{each} of them. The other attribute, \texttt{id="Editor"}, is used to allow reliable matching of the elements when changes are merged.
+
+Correspondingly, \textbf{Annotator} detects \texttt{div} elements with \texttt{class="chunk"} attribute, which denote the sections of R-created content, and provides the annotatable GUI on \emph{each} of these sections.
+
+Once the final editable document is prepared using \texttt{sew()}, \texttt{knit()} and \texttt{snap()}, it must be hosted on a web server to save changes and annotations from \textbf{CKEditor} and \textbf{Annotator}. A test server has been set up at \url{http://stat220.stat.auckland.ac.nz/cke/} and can be accessed with the username and password, \texttt{"cke"}. Instructions can be followed on the web site to upload the editable final document prepared by \texttt{snap()}.
+
+Figures \ref{fig:2.3} and \ref{fig:2.4} present the editable and annotatble GUIs. The line , \emph{``Summary of the cars data:"} (Figure \ref{fig:2.1}), is edited to \emph{``summary(cars)"} in the Teletype (REF) font family. And the annotation, \emph{``need units``}, is made on the text, \emph{``speed"}, of the output. The ``save" button on top of the page can be clicked to store the change and annotation separately in text files on the test server.
+\begin{figure}[h]  % trim=LBRT
+\includegraphics[trim=0cm 14cm 3cm 3.5cm,clip=true,width=1\textwidth,center]{changes}
+\caption{\textbf{CKEditor} GUI}
+\label{fig:2.3}
+\end{figure}
+
+\begin{figure}[h]
+\includegraphics[trim=0cm 14cm 3cm 3.5cm,clip=true,width=1\textwidth,center]{annotate}
+\caption{\texttt{Annotator} GUI}
+\label{fig:2.4}
+\end{figure}
+
+The annotation is saved on a plain text file, \texttt{test-annotations.txt}, in \textbf{JSON} (REF) format and the change is saved on \texttt{test-changes.txt} as simple text. The code structure of these two files can be seen in Listings \ref{lst:2.3} and \ref{lst:2.4}.
+
+\begin{lstlisting}[numbers=none, caption={\texttt{test-annotations.txt}}, label={lst:2.3}]
+[
+  {
+    "ranges":  [
+    {
+      "start":          "/div[1]/div[1]/pre[1]",
+      "startOffset":     8,
+      "end":            "/div[1]/div[1]/pre[1]",
+      "endOffset":      13
+      }
+    ],
+    "quote":"speed",
+    "text":"needs units",
+    "id":"61430634697899221413241555634"
+  }
+]
+\end{lstlisting}
+
+\begin{lstlisting}[numbers=none, caption={\texttt{test-changes.txt}}, label={lst:2.4}]
+EDITOR Editor-1 NOT MODIFIED
+
+EDITOR Editor-2:
+<code>summary(cars)</code>
+\end{lstlisting}
+
+The output of \texttt{snap()} consists of one file, e.g., the editable final document with \texttt{.edit.html} suffix, converted from the input suffix, \texttt{post.html}. The editable document is, then, uploaded onto the test server where editing occurs.
+
+When the editing is completed, cliking on the ``save" button creates the two files, \texttt{test-annotations.txt} and \texttt{test-changes.txt}, on the test server for downloading and retrieval by other means.
+
+%------------------------------------------------------------------------------
+\subsubsection*{\texttt{annotations()}}
+The function merges annotations from \texttt{test-annotations.txt} into the final document. The R package, \textbf{jsonlite} (REF), is the tool used to convert the JSON data (the annotations in \texttt{test-annotation.txt}) into an R object, so that they can be merged into the final document.
+
+Since the R-created sections are restricted to be annotated only, i.e., clients are not allowed to edit them, they require manual adjustments. For this reason, annotations are merged as (HTML) paragraphs with highlighted text and are inserted at the top of their original locations (in the R-created sections), to ease the burden of looking for them and manual merging them afterwards.
+
+The default suffix of the output file is \texttt{.anns.html}, converted from the input suffix, \texttt{.edit.html}.
+
+Listing \ref{lst:2.5} is the code structure of the final document merged with the annotation. The highlighted text, lines 10--12, displays the merged annotation.
+\begin{lstlisting}[caption={(tidied) \texttt{example1.anns.html}}, escapechar=\|, label={lst:2.5}]
+<!DOCTYPE html>
+<html>
+<head></head>
+  <body>
+    <p id="savebutton" style="background-color:grey; text-align:center">
+      <button onclick="savechanges()">save</button>
+    </p>
+    <h1 contenteditable="true" id="Editor-1">Example</h1>
+    <p contenteditable="true" id="Editor-2">Summary of the cars data:</p>
+    |\hl{c}{<p class="annotation" style = "background-color:coral">}|
+    |\hl{c}{<em>Annotation: The text "speed" was annotated with the}|
+    |\hl{c}{message "needs units"</em></p>}|
+    <div class="chunk" id="unnamed-chunk-1">
+      <div class="rcode">
+      <div class="output">
+        <pre class="knitr r">
+          ##      speed           dist    
+          ##  Min.   : 4.0   Min.   :  2  
+          ##  1st Qu.:12.0   1st Qu.: 26  
+          ##  Median :15.0   Median : 36  
+          ##  Mean   :15.4   Mean   : 43  
+          ##  3rd Qu.:19.0   3rd Qu.: 56  
+          ##  Max.   :25.0   Max.   :120
+        </pre></div>
+      </div></div>
+  </body>
+</html>
+\end{lstlisting}
+
+
+%------------------------------------------------------------------------------
+\subsubsection*{\texttt{changes()}}
+The function merges \emph{changes} in the file, \texttt{test-changes.txt}, into the final document.
+
+The \emph{old} content, that has been edited, is replaced by the \emph{new} content, in \texttt{test-changes.txt}.
+
+The default suffix of the output file is \texttt{.save.html}, converted from the input suffix, \texttt{.anns.html}.
+
+Listing \ref{lst:2.6} is the code structure of the final document merged with the change. The highlighted text, line 10, shows the modified text.
+\begin{lstlisting}[caption={(tidied) \texttt{example1.save.html}}, escapechar=\|, label={lst:2.6}]
+<!DOCTYPE html>
+<html>
+<head></head>
+  <body>
+    <p id="savebutton" style="background-color:grey; text-align:center">
+      <button onclick="savechanges()">save</button>
+    </p>
+    <h1 contenteditable="true" id="Editor-1">Example</h1>
+    <p contenteditable="true" id="Editor-2">
+|\hl{c}{<code>summary(cars)</code>}|
+    </p>
+    <p class="annotation" style = "background-color:coral">
+    <em>Annotation: The text "speed" was annotated with the
+    message "needs units"</em></p>
+    <div class="chunk" id="unnamed-chunk-1">
+      <div class="rcode">
+      <div class="output">
+        <pre class="knitr r">
+          ##      speed           dist    
+          ##  Min.   : 4.0   Min.   :  2  
+          ##  1st Qu.:12.0   1st Qu.: 26  
+          ##  Median :15.0   Median : 36  
+          ##  Mean   :15.4   Mean   : 43  
+          ##  3rd Qu.:19.0   3rd Qu.: 56  
+          ##  Max.   :25.0   Max.   :120
+        </pre></div>
+      </div></div>
+  </body>
+</html>
+\end{lstlisting}
+
+Figure \ref{lst:2.5} shows how the \emph{annotated} and \emph{changed} final document, \texttt{example1.save.html} looks like in a web browser.
+\begin{figure}[h]
+\includegraphics[trim=0cm 20.4cm 3cm 1.8cm,clip=true,width=1\textwidth,center]{example1-save}
+\caption{\texttt{example1.save.html}}
+\label{fig:2.5}
+\end{figure}
+
+
+%------------------------------------------------------------------------------
+\subsubsection*{\texttt{rip()}}
+The function inverts final HTML-based documents, merged with changes and annotations, back into R HTML-based source documents.
+
+More specifically, all unwanted contents added from the previous steps are removed. These include; the HTML \texttt{scripts} and \texttt{styles} added by \texttt{knit()} and \texttt{snap()}, the HTML attributes added by \texttt{snap()} and all R-created sections from \texttt{knit()}. The copies of R Code Chunks are reverted back to their original R HTML syntax, in place of the removed R-created sections, to become reproducible.
+
+The default suffix of the output file is \texttt{.return.Rhtml}, converted from the input suffix, \texttt{.save.html}.
+
+Listing \ref{lst:2.7} is the code structure of the inverted document, \texttt{example1.return.Rhtml}.
+\begin{lstlisting}[caption={\texttt{example1.return.Rhtml}}, escapechar=\|, label={lst:2.7}]
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+  <body>
+    <h1>Example</h1>
+    <p>
+<code>summary(cars)</code>
+    </p>
+    <p class="annotation" style = "background-color:coral">
+    <em>Annotation: The text "speed" was annotated with the message "needs units"</em>
+    <!--begin.rcode echo=FALSE
+    summary(cars)
+    end.rcode-->
+  </body>
+</html>
+\end{lstlisting}
+
+Rather than manually comparing the original source and inverted documents, we can use \texttt{diff} utility in UNIX system. The command line below is to compare the original source file, \texttt{example1.Rhtml} and the inverted source file, \texttt{example1.return.Rhtml}:
+\begin{lstlisting}[numbers=none, frame=none]
+$ diff example1.Rhtml example1.return.Rhtml
+\end{lstlisting}
+
+Listing \ref{lst:2.8} is the output from the previous \texttt{diff} command. It says line 7 of the original source document (Listing \ref{lst:2.1}) is changed with the lines 7--11 of the inverted file (Listing \ref{lst:2.7}).
+\begin{lstlisting}[caption={Output from \texttt{diff}}, label={lst:2.8}]
+7c7,11
+<     <p>Summary of the cars data:</p>
+---
+>     <p>
+> <code>summary(cars)</code>
+>     </p>
+>     <p class="annotation" style = "background-color:coral">
+>     <em>Annotation: The text "speed" was annotated with the message "needs units"</em>
+\end{lstlisting}
+
+
+
 % There have been various ideas to support the logic behind the algorithms involved in the steps of the round trip. It is absolutely vital to explore deeper into each function for us to gain better understanding. The main purpose of this section is to simply discuss the role of each function in more detail in order to obtain adequate understanding of the overall project and hopefully answer any questions and uncertainties raised in the previous section.
 % 
 % \subsection{\texttt{sew()}}
@@ -674,8 +856,7 @@ The final stage of the invertible workflow involves text processing to remove an
 % \end{figure}
 % 
 % 
-% 
-% LIMITATIONS section
+%
 
 
 %------------------------------------------------------------------------------
@@ -699,45 +880,38 @@ The final stage of the invertible workflow involves text processing to remove an
 \end{figure}
 
 \section{Introduction}
-Phase 1 workflow is strictly limited to work on R HTML-based documents in conjunction with \textbf{knitr}. This limitation comes from the way our initial objective has been defined, that is, achieving the workflow (as described in Section \ref{sec:3.1}). Because of this restriction, we do not know whether the workflow is \emph{good} enough or viable elsewhere. It performs exactly as we have designed it to, but is it applicable to other formats?
+Phase 1 workflow is strictly limited to work on R HTML-based documents in conjunction with \textbf{knitr}. It is of our interest to generalise the workflow so that a similar workflow can be applicable on other formats.
 
-An important aspect of the workflow to note is the \emph{genericity}. A generic function means that it has specific methods for different types of objects, thus making it very robust. To write a generic piece of code, object-oriented programming is usually considered.
-
-Object-oriented programming (REF) is one of the many programming paradigms that define the fundamental styles of computer programming. R language supports object-oriented programming very well through an \emph{interactive} approach, as opposed to other programming languages, such as C and Java. In this style of programming, an \emph{object} is created by a constructor function and is passed onto \emph{methods} that carry out specific tasks for different types of objects. This means that an object-oriented software is more \emph{generic} to handle different kinds of input more robustly than others.
-
-Unfortunately, the functions invovled in the workflow are neither generic nor object-oriented. As a result, the functions can only handle R HTML- and HTML-based documents as input and phase 1 workflow is strictly limited to work on these two types of document formats. Generalising the workflow or making it object-oriented introduces two problems; the entire workflow may be subject to change, and there is uncertainty to determine if the workflow is worth going through the change.
-
-Let us look at the problems in more detail. Since phase 1 workflow does not involve object-oriented programming, making it to be object-oriented means the entire workflow may require adjustments. Pursuing this will result in a completely different workflow that deviates from the original design we had in mind. In addition, there is no way to determine whether changing the workflow for the sole purpose of making it generic is truly beneficial. Before \emph{any} attempts can be made to improve the workflow, it must be tested, at least, for its applicability. From this test, we can get a rough measure of its potential that may help decide whether to implement changes to the workflow.
-
-In consideration of these problems, the next phase of the project has been decided to explore the applicability of the workflow. The format we have chosen for the second phase is R Markdown. There are four reasons behind our choice; flexibility of R Markdown, easy conversion to HTML, popularity and support.
-
-%-------------------------------------------------------------------------------
-\subsubsection*{Flexibility}
-R Markdown-based documents are \emph{knitted} to be converted into Markdown (REF), which, in turn, can be converted into different document formats by document conversion software. Depending on the kind of the document converter, PDF, HTML and various other widely used document formats can be generated from Markdown. This flexibility provides the client with options to choose a document format that he or she feels comfortable using.
-
-The document converter we have chosen is \textbf{Pandoc} (REF). \textbf{(Should I write the reasons for this choice?)}
-
-%-------------------------------------------------------------------------------
-\subsubsection*{Conversion to HTML}
-R Markdown-based documents can be naturally converted into HTML-based documents. This means that once a R Markdown-based source document is processed into a HTML-based final document, phase 1 workflow has a very high chance of being applicable without requiring much adjustment.
+The format we have chosen for the second phase is R Markdown. There are two main reasons behind our choice; R Markdown is popular and good tools exist for it.
 
 %-------------------------------------------------------------------------------
 \subsubsection*{Popularity}
-Because R Markdown supports flexible conversion, it is increasingly popular and widely used. It has strong emphasis on readability from being an easy-to-read and -write plain text format. This simplicity further increases R Markdown's popularity to be a good candidate for our experiment.
+R Markdown is becoming popular amongst many, which makes it a strong candidate for the second phase of this project. There are two main reasons behind the popularity; its syntax is simple and easy for increased usability and supports flexible conversion into different document formats.
+
+R Markdown-based documents can be flexibly converted into different document formats, such as PDF, HTML and word (ODF/DOCX). Apart from adding on its popularity, what this flexibility allows us to implement in the workflow is the ability to produce final documents in different formats. For example, a final document can be converted to HTML and PDF, where the former can be published on the Web while the latter can be suitable for printing.
+
 
 %-------------------------------------------------------------------------------
-\subsubsection*{Support for R Markdown}
+\subsubsection*{Tools for R Markdown}
 The latest version, R Markdown v2, has many improvements, one of which, for example, is the support for interactive document generation using \textbf{Shiny} (REF). This is a particularly useful feature in regards to the current global trend.
 
 With the vast advancement in technology, the world demands evidence, often through means of visualising, before acceptance and acknowledgement. In the field of statistics, a particularly effective solution to this demand is via data visualisation, whose effectiveness can be exponentially enhanced by \emph{interactivity}. An interactive visualisation method provides fun and exciting ways to visualise data through which client perception and learning can be greatly improved.
 
 R Markdown's support for \textbf{Shiny}, as well as other improvements, is something that is very promising in securing its already popular usage. It also suggests that R Markdown is relatively active and responsive to meet global demands, thus giving us a reason to choose this document format for phase 2.
 
+
 %-------------------------------------------------------------------------------
 \subsubsection*{Demonstration}
 Listing \ref{lst:3.1} is the internal code structure of a simple R Markdown document, \texttt{example2.Rmd}. The highlighted text, lines 6--8, is a simple R Code Chunk.
 
 \begin{lstlisting}[caption={\texttt{example2.Rmd}}, escapechar=\|, label={lst:3.1}]
+---
+title: ""
+output:
+  html_document:
+    toc: false
+---
+
 Example
 =========================
 
@@ -802,19 +976,19 @@ Figure \ref{fig:3.1} shows what \texttt{example2.html} will look like in a web b
 %------------------------------------------------------------------------------
 %--------------------------------- Overview -----------------------------------
 %------------------------------------------------------------------------------
-\pagebreak
+\newpage
 \section{Overview}
 Three additional steps are introduced to phase 2 workflow as a pre-processing stage. Once the source document is \emph{readied} by the three steps of pre-processing, it becomes reproducible and invertible.
 
-Some of the function names kept identical to those in phase 1 workflow to minimise confusion and maintain simplicity. But it must be noted that there are extra features in these functions that work \emph{exclusively} on R Markdown format.
+Some of the function names are kept identical to those in phase 1 workflow to minimise confusion and maintain consistency. But it must be noted that there are extra features in these functions that work \emph{exclusively} for R Markdown.
 
 \begin{figure}[h!]
 \centering
   \begin{tikzpicture}
     \node(source)[process, fill=green!20] {source Rmd};
-    \node(protect)[node distance=4.5cm, process, fill=orange!20, left of=source] {pre Rmd};
-    \node(standardise)[node distance=3cm, process, fill=orange!20, below of=protect] {std Rmd};
-    \node(start)[node distance=3cm, process, fill=green!20, below right of=standardise] {safe Rmd};
+    \node(protect)[node distance=4cm, process, fill=orange!20, right of=source] {pre Rmd};
+    \node(standardise)[node distance=3cm, process, fill=orange!20, below left of=protect] {std Rmd};
+    \node(start)[node distance=4.5cm, process, fill=green!20, below of=standardise] {safe Rmd};
     \node(sew)[node distance=3cm, process, fill=orange!20, below right of=start] {post Rmd};
     \node(knit)[node distance=4.2cm, process, right of=sew] {post HTML};
     \node(snap)[fill=green!20, node distance=3cm, process, above right of=knit] {edit HTML};
@@ -825,16 +999,17 @@ Some of the function names kept identical to those in phase 1 workflow to minimi
     \draw[arrow](start) --node[anchor=east] {\footnotesize{\texttt{render()}}} (output);
     %
     \draw[arrow](source) --node[anchor=south] {\footnotesize{\texttt{protect()}}} (protect);
-    \draw[arrow](protect) --node[anchor=east] {\footnotesize{\texttt{standardise()}}} (standardise);
-    \draw[arrow](standardise) --node[anchor=east] {\footnotesize{\texttt{unprotect()}}} (start);
+    \draw[arrow](protect) --node[anchor=west] {\footnotesize{\texttt{standardise()}}} (standardise);
+    \draw[arrow](standardise) --node[anchor=south west, pos=0.3] {\footnotesize{\texttt{unprotect()}}} (start);
     \draw[arrow](start)--node[anchor=west] {\footnotesize{\texttt{sew()}}} (sew);
     \draw[arrow](sew)--node[anchor=north] {\footnotesize{\texttt{render()}}} (knit);
     \draw[arrow](knit)--node[anchor=west, pos=0.4] {\footnotesize{\texttt{snap()}}} (snap);
     \draw[arrow](snap)--node[anchor=west, pos=0.6] {\footnotesize{\texttt{annotations()}}} (anno);
     \draw[arrow](anno)--node[anchor=north]{\footnotesize{\texttt{changes()}}} (chgs);
     \draw[arrow](chgs)--node[anchor=west] {\footnotesize{\texttt{rip()}}} (start);
-    \draw [->] (start) to [loop left, in=190, out=170, distance=8mm] node[anchor=east, xshift=1mm] {\small{edit}} (start);
+    \draw [->] (source) to [loop left, in=190, out=170, distance=8mm] node[anchor=east, xshift=1mm] {\small{edit}} (source);
     \draw [->] (snap) to [loop right, in=350, out=10, distance=8mm] node[anchor=west, xshift=-1mm] {\small{edit}} (snap);
+    \draw[->, dotted] (start) to (source);
   \end{tikzpicture}
 \caption{Revised reproducible, invertible workflow}
 \label{fig:3.2}
@@ -930,7 +1105,23 @@ output:
 ---
 \end{lstlisting}
 
-Metadata sections are \emph{exclusive} to R Markdown. As a result, \textbf{Pandoc} discards them in its output documents. This means that the metadata information cannot be carried over to subsequent steps after the standardisation step.
+Metadata sections are \emph{exclusive} to R Markdown. As a result, \textbf{Pandoc} discards them in its output documents. This means that the metadata information cannot be carried over to subsequent steps after the standardisation step. \textbf{Pandoc} also interferes with R Code Chunks in R Markdown, because R Code Chunks are not known to \textbf{Pandoc}.  The solution we have chosen is to implement a pre-processing step to protect the metadata sections and R Code Chunks.
+
+The usual delimiters, \texttt{---}, for metadata are changed to \texttt{<!--rmd\_metadata} and \texttt{rmd\_metadata--> rmd-rmLines}. The protected version of the previous metadata example is as below:
+\begin{lstlisting}[numbers=none, frame=none]
+<!--rmd_metadata
+title: "Example"
+output:
+  html_document:
+    toc: true
+    theme: united
+rmd_metadata--> rmd-rmLines
+\end{lstlisting}
+
+R Code Chunks are protected by \texttt{<!--begin.keepcode} and \texttt{end.keepcode--> rmd-rmLines} delimiters.
+
+The function, \texttt{protect()}, carries out the protection of metadata and R Code Chunks.
+
 
 
 %Because \textbf{Pandoc} does not support R Markdown, R Code Chunks are not processed by \textbf{Pandoc} properly. As a result, R Code Chunks are changed with no apparent patterns. For example, the R Code Chunk in lines 6--8 of Listing \ref{lst:3.1} is changed like below:
@@ -947,35 +1138,151 @@ Metadata sections are \emph{exclusive} to R Markdown. As a result, \textbf{Pando
 
 %-------------------------------------------------------------------------------
 \subsubsection*{Conversion of formats}
+\textbf{Pandoc} is used to convert HTML into Markdown, as well as in standardising source documents. This conversion by \textbf{Pandoc} is \emph{one} of the tasks carried out by the function, \texttt{rip()}.
+
 
 
 %-------------------------------------------------------------------------------
-%------------------------------ Function details -------------------------------
+%------------------------------ Functions detail -------------------------------
 %-------------------------------------------------------------------------------
-%\section{Function details}
-%\subsection{\texttt{protect()}}
-%An \textbf{R Markdown} document typically has a metadata section that contains information for title, author, date and options for customising output (such as theme and table of content availability). The metadata section is \emph{exclusive} to the \textbf{R Markdown} format which means \textbf{Pandoc} does not recognise it as the regular Markdown syntax. As a result, this information is discarded after document conversion process by \textbf{Pandoc} takes place.
-%
-%When \textbf{Pandoc} converts an \textbf{R Markdown} document into other document types, the R Code Chunks in the document are changed. R Code Chunks are specified by the native Markdown syntax for fenced code regions, thus one might expect them to be regarded as verbatim programming code throughout different document types. However R Code Chunks are modified with no clear patterns to the extent that no reliable text processing could be devised in order to fix the change.
-%
-%Therefore metadata sections and R Code Chunks are protected, prior to the standardisation by \textbf{Pandoc}. Metadata sections are protected by enclosing them with \texttt{<!--rmd\_metadata} and \texttt{rmd\_metadata--> rmd-rmLines} delimiters, instead of their usual \texttt{---} delimiters. The delimiters used to wrap metadata sections are in the form of a comment in the HTML syntax as they are not interfered by \textbf{Pandoc} and perfectly retainable after standardisation. The text, \texttt{rmd-rmLines}, is used to account for the fact that \textbf{Pandoc} tends to remove empty lines between the end of R Code Chunks and text.
-%
-%R Code Chunks are protected similarly by delimiting them with \texttt{<!--begin.keepcode} and \texttt{end.keepcode-->} markup. One difference here is that the delimiters are added in front and end of the usual \texttt{```{r}} and \texttt{```} delimiters of R Code Chunks to wrap the entirety of R Code Chunks. This allows for more reliable retention of the R code after standardising, as well as easier text processing.
-%
-%The output of \texttt{protect()} is in \texttt{.pre.Rmd} format.
-%
-%
-%\subsection{\texttt{standardise()}}
-%\textbf{Pandoc} has an internally defined format that its output documents are based on. The internal format of \textbf{Pandoc} for a Markdown document requires that the length of text for header must be equivalent to the length of equal signs or dashes that \emph{underline} the headers in setext-style, and code blocks must be delimited with tabs (or 4 spaces) instead of three backtick quotes.
-% 
-%When the inversion process by \textbf{Pandoc} is executed on a Markdown document that disobeys the internal format, the inverted document will always be different to the source document
-%
-%As a result, the number of equal signs and dashes are shortened or extended to match the character width of the text for corresponding headers. Atx-style headers for first two header levels are converted to the setext-style header with the similar length matching, while the other four header levels remain the same. 
-%
-%Once a protected document is prepared, it is standardised into a format that remains consistent over repeated document conversion by \textbf{Pandoc}. By using the option, \texttt{--no-wrap}, \textbf{Pandoc} does not implement text-wrap, based on its internally defined rule.
-%
-%
-%\subsection{\texttt{unprotect()}}
+\newpage
+\section{Functions detail}
+\subsubsection*{\texttt{protect()}}
+The function protects metadata sections and R Code Chunks in the source document.
+
+Metadata sections are delimited by \texttt{<!--rmd\_metadata} and \texttt{rmd\_metadata--> rmd-rmLines}.
+
+R Code Chunks are delimited by \texttt{<!--begin.keepcode} and \texttt{end.keepcode--> rmd-rmLines}.
+
+The use of \texttt{rmd-rmLines} is to correct for \textbf{Pandoc}'s tendency of removing empty lines after the protected lines.
+
+The default suffix of the output file is \texttt{.pre.Rmd}, converted from the source suffix, \texttt{.Rmd}.
+
+Listing \ref{lst:3.3} is the code structure of the protected document, \texttt{example2.pre.Rmd}.
+\begin{lstlisting}[caption={\texttt{example2.pre.Rmd}}, label={lst:3.3}]
+<!--rmd_metadata
+title: ""
+output:
+  html_document:
+    toc: false
+rmd_metadata--> rmd-rmLines
+
+Example
+=========================
+
+Summary of the cars data:
+
+<!--begin.keepcode```{r, echo=FALSE}
+summary(cars)
+```end.keepcode--> rmd-rmLines
+\end{lstlisting}
+
+
+%-------------------------------------------------------------------------------
+\subsubsection*{\texttt{standardise()}}
+The function, \texttt{standardise()}, calls \textbf{Pandoc} to \emph{standardise} the protected source document. In this function, \texttt{system()} is used to invoke the command line necessary for calling \textbf{Pandoc}.
+
+The default suffix of the output file is \texttt{.std.Rmd}, converted from the input suffix, \texttt{.pre.Rmd}.
+
+Listing \ref{lst:3.4} is the code structure of the standardised document, \texttt{example2.std.Rmd}. A couple of things to note is that the equal signs in line 10, which correspond to R Markdown's syntax for specifying a heading, is shortened and the delimiters, \texttt{rmd-rmLines}, are broken into the next lines in lines 7 and 17. These are some of the examples of \textbf{Pandoc}'s internal structure.
+\begin{lstlisting}[caption={\texttt{example2.std.Rmd}}, escapechar=\|, label={lst:3.4}]
+<!--rmd_metadata
+title: ""
+output:
+  html_document:
+    toc: false
+rmd_metadata-->
+|\hl{c}{rmd-rmLines}|
+
+Example
+|\hl{c}{=======}|
+
+Summary of the cars data:
+
+<!--begin.keepcode```{r, echo=FALSE}
+summary(cars)
+```end.keepcode-->
+|\hl{c}{rmd-rmLines}|
+\end{lstlisting}
+
+
+%-------------------------------------------------------------------------------
+\subsubsection*{\texttt{unprotect()}}
+The function removes the protection added by \texttt{protect()}.
+
+The special delimiters used to protect metadata and R Code Chunks are reverted back to their normal R Markdown syntax.
+
+The pushed down lines for \texttt{rmd-rmLines} delimiters are simply removed.
+
+The default suffix of the output file is \texttt{.safe.Rmd}, converted from the input suffix, \texttt{.std.Rmd}.
+
+Listing \ref{lst:3.5} is the code structure of the invertible document, \texttt{example2.safe.Rmd}, that is fully prepared to enter phase 2 invertible workflow.
+\begin{lstlisting}[caption={\texttt{example2.safe.Rmd}}, escapechar=\|, label={lst:3.5}]
+---
+title: ""
+output:
+  html_document:
+    toc: false
+---
+
+Example
+=======
+
+Summary of the cars data:
+
+```{r, echo=FALSE}
+summary(cars)
+```
+\end{lstlisting}
+
+We can use the \texttt{diff} command below to compare the source document, \texttt{example2.Rmd}, and the invertible source document, \texttt{example2.post.Rmd}:
+\begin{lstlisting}[numbers=none, frame=none]
+$ diff example2.Rmd example2.safe.Rmd
+\end{lstlisting}
+
+Listing \ref{lst:3.6} is the output form the previous \texttt{diff} command. The only difference between the two source documents is line 9, where the number of equal signs is reduced by the internal structure of \textbf{Pandoc}.
+\begin{lstlisting}[caption={Output from \texttt{diff}}, label={lst:3.6}]
+9c9
+< =========================
+---
+> =======
+\end{lstlisting}
+
+
+%-------------------------------------------------------------------------------
+\subsubsection*{\texttt{sew()}}
+The function carries out a similar pre-processing step as the phase 1 version with one addition; it copies metadata sections (as well as R Code Chunks) and append the copies after their originals.
+
+The default suffix of the output file is \texttt{.post.Rmd}, converted from the input suffix, \texttt{.safe.Rmd}.
+
+%-------------------------------------------------------------------------------
+\subsubsection*{\texttt{render()}}
+The function is directly from the R package, \texttt{rmarkdown}. This function is what \textbf{knitr} uses to convert R Markdown-based source documents into final documents.
+
+The default suffix of the output file is \texttt{.post.html}, converted from the input suffix, \texttt{post.Rmd}.
+
+%-------------------------------------------------------------------------------
+\subsubsection*{\texttt{snap()}}
+The function carries out conceptually the same tasks as the phase 1 version; add pieces of HTML and JavaScript code to the final document, and add HTML attributes to editable nodes but \emph{differently}.
+
+Two final (HTML-based) documents each generated from \texttt{knit()} and \texttt{render()} are structurally different; the latter is  richer with more contents such as pieces of JavaScript code for \textbf{MathJax} (REF) library and using Bootstrap tables.
+
+These HTML \texttt{scripts} added by \texttt{render()} interfere with the JavaScript code added by \texttt{snap()}, which means \textbf{CKEditor} and \textbf{Annotator} do not work. The solution implemented in phase 2 \texttt{snap()} is to 
+
+%-------------------------------------------------------------------------------
+\subsubsection*{\texttt{annotations()}}
+
+%-------------------------------------------------------------------------------
+\subsubsection*{\texttt{changes()}}
+
+%-------------------------------------------------------------------------------
+\subsubsection*{\texttt{rip()}}
+
+
+
+
+
+
 
 
 

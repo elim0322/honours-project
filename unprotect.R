@@ -39,6 +39,15 @@ unprotect <- function(infile=NULL, outfile=NULL) {
     src <- gsub("rmd_metadata-->", "---", src)
     
     #-------------------------------------------------------#
+    #------------------ Remove empty line ------------------#
+    #-------------------------------------------------------#
+    # Pandoc addes an extra empty line at the end of file.
+    # Look for it and remove it.
+    if (nchar(src[length(src)]) == 0) {
+        src <- src[-length(src)]
+    }
+    
+    #-------------------------------------------------------#
     #------------------- Write .safe.Rmd -------------------#
     #-------------------------------------------------------#
     if (is.null(outfile)) {

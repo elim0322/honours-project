@@ -32,11 +32,11 @@ snap_rhtml <- function(infile = NULL, outfile = NULL) {
     # merging changes afterwards is done explicitly for matching nodes.
     #  NOTE: If R code chunks are named in the source document (.Rhtml), the
     #  names become the id attributes (eg, id="Name") after knit().
-    for (i in 1:length(node)) {
-        # Get the beginning line number of node[[i]].
-        tag.lines <- getLineNumber(node[[i]])
-        # Extract id attribute from node[[i]].
-        id.attr <- xmlGetAttr(node[[i]], "id")
+    for (i in 1:length(nodes)) {
+        # Get the beginning line number of nodes[[i]].
+        tag.lines <- getLineNumber(nodes[[i]])
+        # Extract id attribute from nodes[[i]].
+        id.attr <- xmlGetAttr(nodes[[i]], "id")
         attr <- '\\1 contenteditable=\"true\"'
         
         # If there are no id attributes, make one and paste it to attr.
