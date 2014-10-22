@@ -33,8 +33,10 @@ rip_rmd <- function(infile = NULL, outfile = NULL) {
     #-------------------------------------------------------------------------#
     #------------------------- Remove R chunk output -------------------------#
     #-------------------------------------------------------------------------#
-    # Assuming that ONLY render() has written <pre class="r"
-    chunks.begin <- grep('^<pre class="r"', src)
+    # Assuming that ONLY render() has written <pre><code>... for R Code Chunks
+    # NOTE: R code is delimited by <pre class="r"><code> ... </code></pre>.
+    #       Output is delimited by <pre><code> ... </code></pre>
+    chunks.begin <- grep('^<pre.*><code>.+$', src)
     # Assuming that ONLY render() has written </code></pre>
     ends <- grep("^.*</code></pre>$", src)
     # Find which chunks.end lines are the right ones.
@@ -60,24 +62,27 @@ rip_rmd <- function(infile = NULL, outfile = NULL) {
     #      ...R code...
     #      end.keepcode--></p>"
     
-    # Find the beginning and closing lines and generate a list of sequence.
-    img.begin <- grep("^<p><img.+$", src)
-    img.end <- grep("end[.]keepcode-->.+$", src)
-    img.chunks <- mapply(seq, img.begin, img.end, SIMPLIFY=FALSE)
-    for (i in length(img.chunks):1) {
-        oldLines <- img.chunks[[i]]
-        newLines <- src[unlist(img.chunks[[i]])]
-        # Remove all stuff before "<!--begin.keepcode" from the first line.
-        newLines[1] <- gsub("^.*(<!--begin[.]keepcode.+$)", "\\1", newLines[1])
-        # Remove the closing paragraph tags at the end of "end.keepcode-->"
-        last <- length(newLines)
-        newLines[last] <- gsub("(^.*end[.]keepcode-->).+$", 
-                               "\\1", newLines[last])
-        
-        firstOldLine <- oldLines[1]
-        src <- append(src[-oldLines], newLines, after=firstOldLine-1)
+    # Find the beginning and closing lines and generate a list of sequence,
+    # if there are any.
+    if (any(grepl("^<p><img.+$", src))) {
+        img.begin <- grep("^<p><img.+$", src)
+        img.end <- grep("end[.]keepcode-->.+$", src)
+        img.chunks <- mapply(seq, img.begin, img.end, SIMPLIFY=FALSE)
+        for (i in length(img.chunks):1) {
+            oldLines <- img.chunks[[i]]
+            newLines <- src[unlist(img.chunks[[i]])]
+            # Remove all stuff before "<!--begin.keepcode" from the first line.
+            newLines[1] <- gsub("^.*(<!--begin[.]keepcode.+$)", "\\1", newLines[1])
+            # Remove the closing paragraph tags at the end of "end.keepcode-->"
+            last <- length(newLines)
+            newLines[last] <- gsub("(^.*end[.]keepcode-->).+$", 
+                                   "\\1", newLines[last])
+            
+            firstOldLine <- oldLines[1]
+            src <- append(src[-oldLines], newLines, after=firstOldLine-1)
+        }
     }
-    
+        
     # NOTE: There is no need to remove the scripts of jQuery, CKEditor and
     #       annotator.js as they are removed by pandoc (lines 151-154).
     
@@ -137,7 +142,6 @@ rip_rmd <- function(infile = NULL, outfile = NULL) {
     inline <- grep("^.*<!--rinline[.]keep.+$", src)
     src[inline] <- gsub("<!--rinline[.]keep", "<pre>`r ", src[inline])
     src[inline] <- gsub("-->", "`</pre>", src[inline])
-    src
     
     #-------------------------------------------------------------------------#
     #----------------------- Write post.save-RMD.html ------------------------#
@@ -167,7 +171,6 @@ rip_rmd <- function(infile = NULL, outfile = NULL) {
     # Find inline chunk lines (this is a reliable search as it's searching 
     # within the subset of src that contains tabs.
     inline <- grep("`r.+$", src[tabLines])
-    inline <- tabLines[inline]
     
     # Inline chunks are separated with empty spaces like proper chunks like:
     # text1
@@ -178,15 +181,18 @@ rip_rmd <- function(infile = NULL, outfile = NULL) {
     
     # Generate inline chunk lines as a list and rip out old lines and append
     # correctly formatted lines (new).
-    inline.list <- mapply(seq, inline-2, inline+2, SIMPLIFY=FALSE)
-    for (i in length(inline):1) {
-        oldLines <- inline.list[[i]]
-        # newLines are + and -2 lines to get rid of empty spaces.
-        newLines <- paste(src[inline[i]-2], src[inline[i]], src[inline[i]+2])
-        firstOldLine <- oldLines[1]
-        src <- append(src[-oldLines], newLines, after=firstOldLine - 1)
+    if (length(inline)>0) {
+        inline <- tabLines[inline]
+        inline.list <- mapply(seq, inline-2, inline+2, SIMPLIFY=FALSE)
+        for (i in length(inline):1) {
+            oldLines <- inline.list[[i]]
+            # newLines are + and -2 lines to get rid of empty spaces.
+            newLines <- paste(src[inline[i]-2], src[inline[i]], src[inline[i]+2])
+            firstOldLine <- oldLines[1]
+            src <- append(src[-oldLines], newLines, after=firstOldLine - 1)
+        }
     }
-    
+        
     #-------------------------------------------------------------------------#
     #------------------------------ Write file -------------------------------#
     #-------------------------------------------------------------------------#
@@ -198,7 +204,6 @@ rip_rmd <- function(infile = NULL, outfile = NULL) {
     # inserted by R for double quotes within the string.
     # [1] "This is an \"example\" (we don't want this as the source doc doesn't
     # have the escapes)
-    # NOTE: cat() except the line line to avoid adding an extra empty space.
-    cat(src[-length(src)], sep="\n", file=f)
+    cat(src, sep="\n", file=f)
     close(f)
 }
